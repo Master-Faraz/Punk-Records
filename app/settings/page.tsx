@@ -1,6 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { AppShell } from '@/components/layout/app-shell'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
@@ -19,10 +21,33 @@ import {
   Sparkles,
   HelpCircle,
   Hash,
+  User,
+  LogOut,
+  LogIn,
 } from 'lucide-react'
 
 export default function SettingsPage() {
+  const router = useRouter()
   const queryClient = useQueryClient()
+
+  // Fetch logged in user
+  const { data: currentUser } = useQuery({
+    queryKey: ['current-user'],
+    queryFn: async () => {
+      const supabase = createClient()
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      return user
+    },
+  })
+
+  const handleLogout = async () => {
+    const supabase = createClient()
+    await supabase.auth.signOut()
+    router.push('/auth/login')
+    router.refresh()
+  }
 
   // --- 1. User Settings State ---
   const [stage1Days, setStage1Days] = useState(DEFAULT_USER_SETTINGS.stage_1_days)
@@ -500,6 +525,47 @@ export default function SettingsPage() {
               })}
             </div>
           )}
+        </div>
+
+        {/* 3. Account & Session Section */}
+        <div className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-6 shadow-xl">
+          <div className="flex items-center justify-between border-b border-zinc-800 pb-4 mb-6">
+            <div className="flex items-center gap-2 text-zinc-100 font-semibold text-base">
+              <User className="h-5 w-5 text-amber-400" />
+              <span>Account & Session</span>
+            </div>
+            <span className="text-[11px] text-zinc-400">
+              Manage your active authentication session
+            </span>
+          </div>
+
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 rounded-xl border border-zinc-800 bg-zinc-950 p-4">
+            <div>
+              <div className="text-xs font-semibold text-zinc-200">Connected Account</div>
+              <p className="text-xs text-zinc-400 mt-0.5">
+                {currentUser?.email ?? 'Not signed in'}
+              </p>
+            </div>
+
+            {currentUser ? (
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="flex items-center justify-center gap-2 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-2.5 text-xs font-semibold text-red-400 hover:bg-red-500/20 transition-colors active:scale-95"
+              >
+                <LogOut className="h-4 w-4" />
+                Sign Out
+              </button>
+            ) : (
+              <Link
+                href="/auth/login"
+                className="flex items-center justify-center gap-2 rounded-xl bg-amber-500 px-4 py-2.5 text-xs font-semibold text-zinc-950 hover:bg-amber-400 transition-colors active:scale-95"
+              >
+                <LogIn className="h-4 w-4" />
+                Sign In
+              </Link>
+            )}
+          </div>
         </div>
       </div>
     </AppShell>

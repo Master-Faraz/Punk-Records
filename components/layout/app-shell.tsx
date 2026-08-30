@@ -2,6 +2,7 @@
 
 import Image from 'next/image'
 import { useState, useEffect, type ReactNode } from 'react'
+import Link from 'next/link'
 import { Sidebar } from './sidebar'
 import { BottomNav } from './bottom-nav'
 import { QuickCaptureModal } from '../capture/quick-capture-modal'
@@ -73,7 +74,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <div className="flex flex-1 flex-col h-full overflow-hidden">
         {/* Mobile Top Header */}
         <header className="flex md:hidden h-14 items-center justify-between border-b border-zinc-800/80 bg-zinc-950/80 px-4 backdrop-blur-md">
-          <div className="flex items-center gap-2.5">
+          <Link href="/" className="flex items-center gap-2.5">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg overflow-hidden bg-zinc-900 ring-1 ring-amber-500/20 shadow-sm">
               <Image
                 src="/images/punk-records-logo.png"
@@ -85,13 +86,13 @@ export function AppShell({ children }: { children: ReactNode }) {
               />
             </div>
             <span className="font-bold text-sm tracking-tight text-zinc-100">Punk Records</span>
-          </div>
+          </Link>
 
           <button
             onClick={() => setIsQuickCaptureOpen(true)}
             className="flex items-center gap-1.5 rounded-lg bg-amber-500/10 px-3 py-1.5 text-xs font-semibold text-amber-400 ring-1 ring-amber-500/20 active:scale-95"
           >
-            <Plus className="h-3.5 w-3.5" />
+            <Plus className="h-3.5 w-3.5 stroke-[2.5]" />
             Capture
           </button>
         </header>

@@ -32,15 +32,35 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  // If unauthenticated and trying to access protected route (anything not auth / public assets)
-  const isAuthPage = request.nextUrl.pathname.startsWith('/auth')
+  const pathname = request.nextUrl.pathname
+  const isAuthPage = pathname.startsWith('/auth')
+  const isAuthCallback = pathname === '/auth/callback'
+  const isApiRoute = pathname.startsWith('/api')
   const isPublicAsset =
-    request.nextUrl.pathname.startsWith('/_next') ||
-    request.nextUrl.pathname.startsWith('/static') ||
-    request.nextUrl.pathname.includes('.')
+    pathname.startsWith('/_next') ||
+    pathname.startsWith('/static') ||
+    pathname.includes('.')
 
-  if (!user && !isAuthPage && !isPublicAsset && request.nextUrl.pathname !== '/') {
-    // allow homepage or redirect to /auth/login
+  // If unauthenticated and trying to access a protected route
+  if (!user && !isAuthPage && !isApiRoute && !isPublicAsset) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/auth/login'
+    const redirectResponse = NextResponse.redirect(url)
+    supabaseResponse.cookies.getAll().forEach((cookie) => {
+      redirectResponse.cookies.set(cookie.name, cookie.value, cookie)
+    })
+    return redirectResponse
+  }
+
+  // If authenticated and trying to access auth pages (login / signup)
+  if (user && isAuthPage && !isAuthCallback) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/'
+    const redirectResponse = NextResponse.redirect(url)
+    supabaseResponse.cookies.getAll().forEach((cookie) => {
+      redirectResponse.cookies.set(cookie.name, cookie.value, cookie)
+    })
+    return redirectResponse
   }
 
   return supabaseResponse
