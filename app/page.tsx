@@ -296,7 +296,7 @@ export default function VaultPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {filteredRecords.map((record) => {
+            {filteredRecords.map((record, index) => {
               const isDue = new Date(record.next_review_at) <= new Date()
               return (
                 <div
@@ -313,7 +313,8 @@ export default function VaultPage() {
                         fill
                         sizes="(max-width: 768px) 100vw, 400px"
                         className="object-cover group-hover:scale-105 transition-transform duration-300"
-                        loading="lazy"
+                        priority={index < 2}
+                        loading={index < 2 ? 'eager' : 'lazy'}
                       />
                     </div>
                   )}

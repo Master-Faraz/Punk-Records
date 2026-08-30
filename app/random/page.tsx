@@ -239,7 +239,7 @@ export default function RandomPage() {
                   fill
                   sizes="(max-width: 768px) 100vw, 700px"
                   className="object-cover"
-                  loading="lazy"
+                  priority
                 />
               </div>
             )}
