@@ -31,10 +31,10 @@ export function BottomNav({ dueCount = 0, onQuickCapture }: BottomNavProps) {
             pathname === '/review' ? 'text-zinc-100 font-bold' : 'text-zinc-500 hover:text-zinc-200'
           }`}
         >
-          <Brain className="h-5 w-5" />
+          <Brain className={`h-5 w-5 ${pathname === '/review' ? 'text-red-400' : ''}`} />
           <span>Review</span>
           {dueCount > 0 && (
-            <span className="absolute top-0.5 right-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-white px-1 text-[9px] font-bold text-zinc-950 font-mono shadow-sm">
+            <span className="absolute top-0.5 right-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white font-mono shadow-sm shadow-red-500/40">
               {dueCount}
             </span>
           )}

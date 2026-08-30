@@ -45,6 +45,11 @@
   --color-accent: #f2f2f0;
   --color-accent-hover: #ffffff;
 
+  /* Conqueror's Haki Crimson Red Accent */
+  --color-haki: #ef4444;
+  --color-haki-dark: #dc2626;
+  --color-haki-glow: rgba(239, 68, 68, 0.25);
+
   /* Map Zinc tokens to Portfolio obsidian surfaces */
   --color-zinc-950: #08090a;
   --color-zinc-900: #101214;

@@ -321,10 +321,10 @@ export default function RecordDetailPage({ params }: { params: Promise<{ id: str
 
           {/* Direct Review Trigger if Due */}
           {isDue && (
-            <div className="mt-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 rounded-2xl border border-zinc-800 bg-zinc-950 p-4 sm:p-5">
+            <div className="mt-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 rounded-2xl border border-red-500/30 bg-red-500/10 p-4 sm:p-5 shadow-lg shadow-red-950/20">
               <div>
-                <span className="text-xs font-semibold text-zinc-100 block">
-                  This record is due for spaced review today!
+                <span className="text-xs font-bold text-red-400 block">
+                  ⚡ This record is due for spaced review today!
                 </span>
                 <span className="text-[11px] text-zinc-400">
                   Rate your recall to advance to the next spaced stage.

@@ -351,12 +351,12 @@ export default function VaultPage() {
                             }}
                             className={`rounded-lg p-1.5 transition-colors ${
                               record.is_favorite
-                                ? 'text-white hover:text-zinc-200'
+                                ? 'text-red-500 hover:text-red-400'
                                 : 'text-zinc-600 hover:text-zinc-400'
                             }`}
                             title="Toggle Star"
                           >
-                            <Star className={`h-4 w-4 ${record.is_favorite ? 'fill-white text-white' : ''}`} />
+                            <Star className={`h-4 w-4 ${record.is_favorite ? 'fill-red-500 text-red-500' : ''}`} />
                           </button>
 
                           <button
@@ -410,7 +410,7 @@ export default function VaultPage() {
 
                       <div>
                         {isDue ? (
-                          <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-bold text-zinc-950 font-mono shadow-sm">
+                          <span className="rounded-full bg-red-500/15 px-2 py-0.5 text-[10px] font-bold text-red-400 ring-1 ring-red-500/30 font-mono shadow-sm">
                             Due for Review
                           </span>
                         ) : (

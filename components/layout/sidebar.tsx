@@ -55,19 +55,19 @@ export function Sidebar({ dueCount = 0, userEmail, onQuickCapture }: SidebarProp
       <div className="flex flex-col gap-6">
         {/* Logo & Brand */}
         <Link href="/" className="flex items-center gap-3 px-2 py-1 group">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl overflow-hidden bg-zinc-900 ring-1 ring-white/10 group-hover:ring-white/30 transition-all shadow-sm">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl overflow-hidden bg-zinc-900 ring-1 ring-red-500/40 group-hover:ring-red-500/80 transition-all shadow-lg shadow-red-950/40">
             <Image
               src="/images/punk-records-logo.png"
               alt="Punk Records Logo"
-              width={36}
-              height={36}
+              width={40}
+              height={40}
               className="h-full w-full object-cover transition-transform group-hover:scale-105"
               priority
             />
           </div>
           <div>
             <span className="font-bold text-sm text-zinc-100 tracking-tight block">Punk Records</span>
-            <span className="text-[10px] text-zinc-500 font-mono block uppercase tracking-wider">Second Brain</span>
+            <span className="text-[9px] text-red-400 font-mono block uppercase tracking-widest font-semibold">Neural Recall Engine</span>
           </div>
         </Link>
 
@@ -96,11 +96,11 @@ export function Sidebar({ dueCount = 0, userEmail, onQuickCapture }: SidebarProp
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  <Icon className={`h-4 w-4 ${isActive ? 'text-zinc-100' : 'text-zinc-500'}`} />
+                  <Icon className={`h-4 w-4 ${isActive ? 'text-red-400' : 'text-zinc-500'}`} />
                   <span>{item.label}</span>
                 </div>
                 {item.badge !== null && (
-                  <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-white px-1.5 text-[10px] font-bold text-zinc-950 font-mono shadow-sm">
+                  <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 text-[10px] font-bold text-white font-mono shadow-sm shadow-red-500/30">
                     {item.badge}
                   </span>
                 )}
@@ -117,9 +117,9 @@ export function Sidebar({ dueCount = 0, userEmail, onQuickCapture }: SidebarProp
             <span className="text-xs font-medium text-zinc-200 truncate">
               {userEmail ?? 'User'}
             </span>
-            <span className="text-[10px] text-zinc-500 flex items-center gap-1">
-              <span className="h-1.5 w-1.5 rounded-full bg-zinc-400 inline-block animate-pulse" />
-              Connected
+            <span className="text-[10px] text-zinc-500 flex items-center gap-1.5 font-mono">
+              <span className="h-1.5 w-1.5 rounded-full bg-red-500 inline-block shadow-sm shadow-red-500 animate-pulse" />
+              Haki Synced
             </span>
           </div>
           <button

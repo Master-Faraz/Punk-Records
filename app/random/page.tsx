@@ -154,7 +154,7 @@ export default function RandomPage() {
         {/* Top Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-zinc-900 text-zinc-100 ring-1 ring-zinc-800 shadow-sm">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-red-500/10 text-red-500 ring-1 ring-red-500/30 shadow-lg shadow-red-950/20">
               <Dices className="h-5 w-5" />
             </div>
             <div>

@@ -71,7 +71,7 @@ export default function SignUpPage() {
   return (
     <div className="w-full rounded-2xl border border-zinc-800/80 bg-zinc-900/60 p-8 shadow-2xl backdrop-blur-xl">
       <div className="mb-8 flex flex-col items-center text-center">
-        <div className="mb-3 flex h-16 w-16 items-center justify-center rounded-2xl overflow-hidden bg-zinc-900 shadow-xl ring-1 ring-zinc-800">
+        <div className="mb-3 flex h-16 w-16 items-center justify-center rounded-2xl overflow-hidden bg-zinc-900 shadow-2xl shadow-red-950/50 ring-1 ring-red-500/40">
           <Image
             src="/images/punk-records-logo.png"
             alt="Punk Records Logo"
@@ -82,7 +82,7 @@ export default function SignUpPage() {
           />
         </div>
         <h1 className="text-2xl font-bold tracking-tight text-zinc-50">Create Account</h1>
-        <p className="mt-1 text-sm text-zinc-400">Start storing and retaining what you learn</p>
+        <p className="mt-1 text-xs text-red-400 font-mono tracking-wider uppercase font-semibold">Neural Recall Engine</p>
       </div>
 
       {errorMsg && (

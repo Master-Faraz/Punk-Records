@@ -100,7 +100,7 @@ export function QuickCaptureModal({ isOpen, onClose }: QuickCaptureModalProps) {
       >
         <div className="flex items-center justify-between pb-4 border-b border-zinc-800">
           <div className="flex items-center gap-2 text-zinc-100 font-semibold text-sm">
-            <Zap className="h-4 w-4 text-zinc-300" />
+            <Zap className="h-4 w-4 text-red-500 fill-red-500/20" />
             <span>Quick Capture</span>
           </div>
           <button

@@ -122,7 +122,7 @@ export default function ReviewPage() {
         {/* Top Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-zinc-900 text-zinc-100 ring-1 ring-zinc-800 shadow-sm">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-red-500/10 text-red-500 ring-1 ring-red-500/30 shadow-lg shadow-red-950/20">
               <Brain className="h-5 w-5" />
             </div>
             <div>
@@ -132,7 +132,7 @@ export default function ReviewPage() {
           </div>
 
           {totalCount > 0 && (
-            <span className="rounded-full bg-white px-3 py-1 text-xs font-bold text-zinc-950 font-mono shadow-sm">
+            <span className="rounded-full bg-red-500 px-3 py-1 text-xs font-bold text-white font-mono shadow-sm shadow-red-500/30">
               {currentIndex + 1} of {totalCount} due
             </span>
           )}
