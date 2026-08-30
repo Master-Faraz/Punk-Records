@@ -219,13 +219,6 @@ export default function RecordDetailPage({ params }: { params: Promise<{ id: str
             {record.title}
           </h1>
 
-          {/* Embedded YouTube Player if source is YouTube */}
-          {isYoutube && record.source_url && (
-            <div className="mt-4">
-              <YouTubeEmbed url={record.source_url} title={record.title} />
-            </div>
-          )}
-
           {/* Source Link (for articles, books, etc.) */}
           {record.source_url && !isYoutube && (
             <div className="mt-3">
@@ -298,6 +291,27 @@ export default function RecordDetailPage({ params }: { params: Promise<{ id: str
         <div className="rounded-2xl border border-zinc-800/80 bg-zinc-950 p-6 shadow-sm min-h-[300px]">
           <TiptapRenderer content={record.content} />
         </div>
+
+        {/* Embedded YouTube Player (Below Body) */}
+        {isYoutube && record.source_url && (
+          <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-6 overflow-hidden">
+            <div className="mb-4 flex items-center justify-between">
+              <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
+                Attached Video
+              </span>
+              <a
+                href={record.source_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-xs text-amber-400 hover:text-amber-300 transition-colors"
+              >
+                <ExternalLink className="h-3.5 w-3.5" />
+                <span>Open in YouTube</span>
+              </a>
+            </div>
+            <YouTubeEmbed url={record.source_url} title={record.title} />
+          </div>
+        )}
       </div>
     </AppShell>
   )

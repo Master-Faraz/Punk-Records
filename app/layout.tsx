@@ -1,17 +1,31 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import { QueryProvider } from "@/providers/query-provider";
 import { ServiceWorkerRegister } from "@/components/pwa/sw-register";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
+const neueHaas = localFont({
+  src: "../public/fonts/NeueHaasDisplay-Roman.woff2",
+  variable: "--font-neue",
+  display: "swap",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+const ppEditorial = localFont({
+  src: "../public/fonts/PPEditorialNew-Ultralight.woff2",
+  variable: "--font-ppeditorial",
+  display: "swap",
+});
+
+const martianMono = localFont({
+  src: "../public/fonts/MartianMono-Light.woff2",
+  variable: "--font-martian",
+  display: "swap",
+});
+
+const familjenGrotesk = localFont({
+  src: "../public/fonts/FamiljenGrotesk-Regular.woff2",
+  variable: "--font-familjen",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -25,7 +39,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: "#09090b",
+  themeColor: "#08090a",
 };
 
 export default function RootLayout({
@@ -36,12 +50,13 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased dark`}
+      className={`${neueHaas.variable} ${ppEditorial.variable} ${martianMono.variable} ${familjenGrotesk.variable} h-full antialiased dark scroll-smooth`}
     >
-      <body className="min-h-full flex flex-col bg-zinc-950 text-zinc-100 selection:bg-amber-500/20 selection:text-amber-400">
+      <body className="min-h-full flex flex-col bg-[#08090a] text-[#f2f2f0] font-sans selection:bg-teal-500/20 selection:text-teal-400">
         <QueryProvider>{children}</QueryProvider>
         <ServiceWorkerRegister />
       </body>
     </html>
   );
 }
+
