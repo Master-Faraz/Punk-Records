@@ -18,7 +18,7 @@ export function BottomNav({ dueCount = 0, onQuickCapture }: BottomNavProps) {
         <Link
           href="/"
           className={`flex flex-col items-center justify-center gap-1 w-14 py-1 text-[10px] font-medium transition-colors ${
-            pathname === '/' ? 'text-zinc-100 font-bold' : 'text-zinc-500 hover:text-zinc-200'
+            pathname === '/' ? 'text-red-400 font-bold' : 'text-zinc-500 hover:text-zinc-200'
           }`}
         >
           <BookOpen className="h-5 w-5" />
@@ -28,10 +28,10 @@ export function BottomNav({ dueCount = 0, onQuickCapture }: BottomNavProps) {
         <Link
           href="/review"
           className={`relative flex flex-col items-center justify-center gap-1 w-14 py-1 text-[10px] font-medium transition-colors ${
-            pathname === '/review' ? 'text-zinc-100 font-bold' : 'text-zinc-500 hover:text-zinc-200'
+            pathname === '/review' ? 'text-red-400 font-bold' : 'text-zinc-500 hover:text-zinc-200'
           }`}
         >
-          <Brain className={`h-5 w-5 ${pathname === '/review' ? 'text-red-400' : ''}`} />
+          <Brain className="h-5 w-5" />
           <span>Review</span>
           {dueCount > 0 && (
             <span className="absolute top-0.5 right-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white font-mono shadow-sm shadow-red-500/40">
@@ -52,7 +52,7 @@ export function BottomNav({ dueCount = 0, onQuickCapture }: BottomNavProps) {
         <Link
           href="/random"
           className={`flex flex-col items-center justify-center gap-1 w-14 py-1 text-[10px] font-medium transition-colors ${
-            pathname === '/random' ? 'text-zinc-100 font-bold' : 'text-zinc-500 hover:text-zinc-200'
+            pathname === '/random' ? 'text-red-400 font-bold' : 'text-zinc-500 hover:text-zinc-200'
           }`}
         >
           <Dices className="h-5 w-5" />
@@ -62,7 +62,7 @@ export function BottomNav({ dueCount = 0, onQuickCapture }: BottomNavProps) {
         <Link
           href="/settings"
           className={`flex flex-col items-center justify-center gap-1 w-14 py-1 text-[10px] font-medium transition-colors ${
-            pathname === '/settings' ? 'text-zinc-100 font-bold' : 'text-zinc-500 hover:text-zinc-200'
+            pathname === '/settings' ? 'text-red-400 font-bold' : 'text-zinc-500 hover:text-zinc-200'
           }`}
         >
           <Settings className="h-5 w-5" />
