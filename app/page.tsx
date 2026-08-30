@@ -1,69 +1,432 @@
-import Image from "next/image";
+'use client'
 
-export default function Home() {
+import { useState } from 'react'
+import Image from 'next/image'
+import { AppShell } from '@/components/layout/app-shell'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { createClient } from '@/lib/supabase/client'
+import type { RecordItem, Tag } from '@/types/database'
+import {
+  Search,
+  Star,
+  ExternalLink,
+  BookOpen,
+  Eye,
+  Calendar,
+  Sparkles,
+  Trash2,
+  Filter,
+  Plus,
+  Loader2,
+  Hash,
+  X,
+} from 'lucide-react'
+import Link from 'next/link'
+
+export default function VaultPage() {
+  const queryClient = useQueryClient()
+  const [searchQuery, setSearchQuery] = useState('')
+  const [selectedType, setSelectedType] = useState<string>('all')
+  const [selectedTag, setSelectedTag] = useState<string>('all')
+  const [sortBy, setSortBy] = useState<'newest' | 'read_count' | 'next_review'>('newest')
+
+  // Fetch all user tags for tag filtering
+  const { data: allTags = [] } = useQuery<Tag[]>({
+    queryKey: ['tags'],
+    queryFn: async () => {
+      const supabase = createClient()
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      if (!user) return []
+
+      const { data, error } = await supabase
+        .from('tags')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('name', { ascending: true })
+
+      if (error) throw error
+      return data || []
+    },
+  })
+
+  // Fetch all records with joined tags
+  const { data: records = [], isLoading } = useQuery<RecordItem[]>({
+    queryKey: ['records', selectedType, sortBy],
+    queryFn: async () => {
+      const supabase = createClient()
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+
+      if (!user) return []
+
+      let query = supabase
+        .from('records')
+        .select(`
+          *,
+          record_tags(
+            tag:tags(*)
+          )
+        `)
+        .eq('user_id', user.id)
+        .eq('is_archived', false)
+
+      if (selectedType === 'favorites') {
+        query = query.eq('is_favorite', true)
+      } else if (selectedType !== 'all') {
+        query = query.eq('source_type', selectedType)
+      }
+
+      if (sortBy === 'newest') {
+        query = query.order('created_at', { ascending: false })
+      } else if (sortBy === 'read_count') {
+        query = query.order('read_count', { ascending: false })
+      } else if (sortBy === 'next_review') {
+        query = query.order('next_review_at', { ascending: true })
+      }
+
+      const { data, error } = await query
+      if (error) throw error
+
+      return (data || []).map((r: any) => ({
+        ...r,
+        tags: r.record_tags?.map((rt: any) => rt.tag).filter(Boolean) || [],
+      }))
+    },
+  })
+
+  // Optimistic Toggle Favorite Mutation
+  const toggleFavoriteMutation = useMutation({
+    mutationFn: async ({ id, is_favorite }: { id: string; is_favorite: boolean }) => {
+      const supabase = createClient()
+      const { error } = await supabase
+        .from('records')
+        .update({ is_favorite })
+        .eq('id', id)
+      if (error) throw error
+    },
+    onMutate: async ({ id, is_favorite }) => {
+      await queryClient.cancelQueries({ queryKey: ['records'] })
+      const previousRecords = queryClient.getQueryData<RecordItem[]>(['records', selectedType, sortBy])
+      if (previousRecords) {
+        queryClient.setQueryData<RecordItem[]>(
+          ['records', selectedType, sortBy],
+          previousRecords.map((r) => (r.id === id ? { ...r, is_favorite } : r))
+        )
+      }
+      return { previousRecords }
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previousRecords) {
+        queryClient.setQueryData(['records', selectedType, sortBy], context.previousRecords)
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['records'] })
+    },
+  })
+
+  // Delete Record Mutation
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const supabase = createClient()
+      const { error } = await supabase.from('records').delete().eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['records'] })
+      queryClient.invalidateQueries({ queryKey: ['due-count'] })
+    },
+  })
+
+  // Filter records by search (title / URL) AND tag filter
+  const filteredRecords = records.filter((r) => {
+    // 1. Tag filter
+    if (selectedTag !== 'all') {
+      const hasTag = r.tags?.some((t) => t.id === selectedTag)
+      if (!hasTag) return false
+    }
+
+    // 2. Search query filter (title & source url)
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase()
+      const matchTitle = r.title.toLowerCase().includes(q)
+      const matchUrl = r.source_url?.toLowerCase().includes(q)
+      if (!matchTitle && !matchUrl) return false
+    }
+
+    return true
+  })
+
+  const filterTabs = [
+    { id: 'all', label: 'All Vault' },
+    { id: 'favorites', label: 'Starred' },
+    { id: 'note', label: 'Notes' },
+    { id: 'youtube', label: 'YouTube' },
+    { id: 'article', label: 'Articles' },
+    { id: 'book', label: 'Books' },
+  ]
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+    <AppShell>
+      <div className="flex flex-col gap-6">
+        {/* Header */}
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight text-zinc-100">Knowledge Vault</h1>
+            <p className="text-xs text-zinc-400">Search and filter your retained notes, takeaways, and links</p>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Link
+              href="/editor/new"
+              className="flex items-center gap-1.5 rounded-xl bg-amber-500 px-4 py-2 text-xs font-semibold text-zinc-950 transition-all hover:bg-amber-400 active:scale-95 shadow-sm"
             >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+              <Plus className="h-4 w-4" />
+              New Rich Record
+            </Link>
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
+
+        {/* Search & Sort Controls */}
+        <div className="flex flex-col md:flex-row gap-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-3.5 top-3 h-4 w-4 text-zinc-500" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search by title or source URL..."
+              className="w-full rounded-xl border border-zinc-800 bg-zinc-900/80 pl-10 pr-4 py-2.5 text-xs text-zinc-200 placeholder-zinc-500 focus:border-amber-500/50 focus:outline-none focus:ring-1 focus:ring-amber-500/50 transition-all"
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 rounded-xl border border-zinc-800 bg-zinc-900/80 px-3 py-1.5 text-xs text-zinc-400">
+              <Filter className="h-3.5 w-3.5 text-zinc-500" />
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as any)}
+                className="bg-transparent text-xs text-zinc-200 focus:outline-none cursor-pointer"
+              >
+                <option value="newest" className="bg-zinc-900">Sort: Newest</option>
+                <option value="read_count" className="bg-zinc-900">Sort: Most Read</option>
+                <option value="next_review" className="bg-zinc-900">Sort: Due First</option>
+              </select>
+            </div>
+          </div>
         </div>
-      </main>
-    </div>
-  );
+
+        {/* Type Filter Tabs */}
+        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+          {filterTabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setSelectedType(tab.id)}
+              className={`rounded-lg px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-colors ${
+                selectedType === tab.id
+                  ? 'bg-amber-500/10 text-amber-400 ring-1 ring-amber-500/30 font-semibold'
+                  : 'bg-zinc-900/60 text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200 border border-zinc-800/80'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Dedicated Tag Filter Pill Bar */}
+        {allTags.length > 0 && (
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none border-y border-zinc-800/60 py-2.5">
+            <span className="text-[11px] font-semibold text-zinc-500 flex items-center gap-1 pl-1 shrink-0">
+              <Hash className="h-3 w-3" /> Tags:
+            </span>
+
+            <button
+              onClick={() => setSelectedTag('all')}
+              className={`rounded-lg px-2.5 py-1 text-[11px] font-medium whitespace-nowrap transition-colors ${
+                selectedTag === 'all'
+                  ? 'bg-zinc-200 text-zinc-950 font-bold'
+                  : 'bg-zinc-900 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200'
+              }`}
+            >
+              All Tags
+            </button>
+
+            {allTags.map((tag) => {
+              const isSelected = selectedTag === tag.id
+              return (
+                <button
+                  key={tag.id}
+                  onClick={() => setSelectedTag(isSelected ? 'all' : tag.id)}
+                  className={`flex items-center gap-1 rounded-lg px-2.5 py-1 text-[11px] font-medium whitespace-nowrap transition-colors ${
+                    isSelected
+                      ? 'bg-amber-500 text-zinc-950 font-bold shadow-sm'
+                      : 'bg-zinc-900 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 border border-zinc-800/80'
+                  }`}
+                >
+                  <span>#{tag.name}</span>
+                  {isSelected && <X className="h-3 w-3" />}
+                </button>
+              )
+            })}
+          </div>
+        )}
+
+        {/* Records Grid */}
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center py-24 text-zinc-500">
+            <Loader2 className="h-6 w-6 animate-spin text-amber-500" />
+            <span className="mt-2 text-xs">Loading vault...</span>
+          </div>
+        ) : filteredRecords.length === 0 ? (
+          <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-zinc-800 bg-zinc-900/20 py-20 text-center">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-zinc-900 text-zinc-500 border border-zinc-800 mb-3">
+              <BookOpen className="h-5 w-5" />
+            </div>
+            <h3 className="text-sm font-semibold text-zinc-200">No records found</h3>
+            <p className="mt-1 text-xs text-zinc-500 max-w-sm">
+              {searchQuery || selectedTag !== 'all'
+                ? 'Try adjusting your search keywords or tag filters.'
+                : 'Capture your first note, YouTube takeaway, or book highlight in under a minute.'}
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {filteredRecords.map((record) => {
+              const isDue = new Date(record.next_review_at) <= new Date()
+              return (
+                <div
+                  key={record.id}
+                  className="group relative flex flex-col justify-between rounded-2xl border border-zinc-800/80 bg-zinc-900/50 hover:border-zinc-700/80 hover:bg-zinc-900/80 transition-all shadow-sm overflow-hidden"
+                >
+                  {/* Optional Card Thumbnail Banner */}
+                  {record.thumbnail_url && (
+                    <Link href={`/records/${record.id}`} className="relative h-40 w-full block overflow-hidden bg-zinc-950 border-b border-zinc-800/80">
+                      <Image
+                        src={record.thumbnail_url}
+                        alt={record.title}
+                        fill
+                        sizes="(max-width: 768px) 100vw, 400px"
+                        className="object-cover group-hover:scale-105 transition-transform duration-300"
+                        loading="lazy"
+                      />
+                    </Link>
+                  )}
+
+                  <div className="p-5 flex-1 flex flex-col justify-between">
+                    <div>
+                      {/* Top Row: Type Badge + Star */}
+                      <div className="flex items-center justify-between gap-2 mb-2.5">
+                        <span className="inline-flex items-center rounded-md bg-zinc-800/80 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-zinc-400">
+                          {record.source_type}
+                        </span>
+
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={() =>
+                              toggleFavoriteMutation.mutate({
+                                id: record.id,
+                                is_favorite: !record.is_favorite,
+                              })
+                            }
+                            className={`rounded-lg p-1.5 transition-colors ${
+                              record.is_favorite
+                                ? 'text-amber-400 hover:text-amber-300'
+                                : 'text-zinc-600 hover:text-zinc-400'
+                            }`}
+                            title="Toggle Star"
+                          >
+                            <Star className={`h-4 w-4 ${record.is_favorite ? 'fill-amber-400' : ''}`} />
+                          </button>
+
+                          <button
+                            onClick={() => {
+                              if (confirm('Delete this record?')) {
+                                deleteMutation.mutate(record.id)
+                              }
+                            }}
+                            className="opacity-0 group-hover:opacity-100 rounded-lg p-1.5 text-zinc-600 hover:text-red-400 transition-all"
+                            title="Delete Record"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Record Title */}
+                      <Link href={`/records/${record.id}`} className="block group-hover:text-amber-400 transition-colors">
+                        <h3 className="text-base font-semibold tracking-tight text-zinc-100 line-clamp-2">
+                          {record.title}
+                        </h3>
+                      </Link>
+
+                      {/* Source URL */}
+                      {record.source_url && (
+                        <a
+                          href={record.source_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="mt-1.5 inline-flex items-center gap-1 text-[11px] text-zinc-500 hover:text-zinc-300 transition-colors truncate max-w-full"
+                        >
+                          <ExternalLink className="h-3 w-3 shrink-0" />
+                          <span className="truncate">{record.source_url.replace(/^https?:\/\//, '')}</span>
+                        </a>
+                      )}
+
+                      {/* Tags */}
+                      {record.tags && record.tags.length > 0 && (
+                        <div className="mt-3 flex flex-wrap gap-1.5">
+                          {record.tags.map((tag) => (
+                            <button
+                              key={tag.id}
+                              onClick={() => setSelectedTag(tag.id)}
+                              className="rounded-md bg-zinc-800/60 px-2 py-0.5 text-[10px] font-medium text-zinc-400 hover:text-amber-400 transition-colors"
+                            >
+                              #{tag.name}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Bottom Stats Footer */}
+                    <div className="mt-5 flex items-center justify-between border-t border-zinc-800/60 pt-3 text-[11px] text-zinc-500">
+                      <div className="flex items-center gap-3">
+                        <span className="flex items-center gap-1" title="Times revisited">
+                          <Eye className="h-3.5 w-3.5 text-zinc-600" />
+                          {record.read_count} reads
+                        </span>
+                        <span className="flex items-center gap-1" title="Repetition stage">
+                          <Sparkles className="h-3.5 w-3.5 text-zinc-600" />
+                          Stage {record.review_stage}
+                        </span>
+                      </div>
+
+                      <div>
+                        {isDue ? (
+                          <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-400 ring-1 ring-amber-500/20">
+                            Due for Review
+                          </span>
+                        ) : (
+                          <span className="flex items-center gap-1">
+                            <Calendar className="h-3 w-3" />
+                            {new Date(record.next_review_at).toLocaleDateString(undefined, {
+                              month: 'short',
+                              day: 'numeric',
+                            })}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
+    </AppShell>
+  )
 }
