@@ -22,6 +22,8 @@ import {
   Loader2,
   Check,
   RotateCcw,
+  Tag as TagIcon,
+  Clock,
 } from 'lucide-react'
 import Link from 'next/link'
 
@@ -71,7 +73,7 @@ export default function RecordDetailPage({ params }: { params: Promise<{ id: str
         .eq('id', record.id)
     }
     incrementRead()
-  }, [id])
+  }, [id, record])
 
   // Review mutation
   const reviewMutation = useMutation({
@@ -131,7 +133,7 @@ export default function RecordDetailPage({ params }: { params: Promise<{ id: str
     return (
       <AppShell>
         <div className="flex flex-col items-center justify-center py-24 text-zinc-500">
-          <Loader2 className="h-6 w-6 animate-spin text-amber-500" />
+          <Loader2 className="h-6 w-6 animate-spin text-teal-400" />
           <span className="mt-2 text-xs">Loading record...</span>
         </div>
       </AppShell>
@@ -143,7 +145,7 @@ export default function RecordDetailPage({ params }: { params: Promise<{ id: str
       <AppShell>
         <div className="text-center py-20">
           <h2 className="text-lg font-bold text-zinc-200">Record not found</h2>
-          <Link href="/" className="mt-4 inline-block text-xs font-semibold text-amber-400">
+          <Link href="/" className="mt-4 inline-block text-xs font-semibold text-teal-400">
             Return to Vault
           </Link>
         </div>
@@ -154,122 +156,186 @@ export default function RecordDetailPage({ params }: { params: Promise<{ id: str
   const isDue = new Date(record.next_review_at) <= new Date()
   const isYoutube = !!getYouTubeVideoId(record.source_url)
 
+  // Estimated reading time calculation (handles Tiptap JSON or string)
+  let textOnly = ''
+  if (typeof record.content === 'string') {
+    textOnly = record.content.replace(/<[^>]*>/g, '').trim()
+  } else if (record.content && typeof record.content === 'object') {
+    const texts: string[] = []
+    const traverse = (node: any) => {
+      if (!node) return
+      if (node.text) texts.push(node.text)
+      if (Array.isArray(node.content)) {
+        node.content.forEach(traverse)
+      }
+    }
+    traverse(record.content)
+    textOnly = texts.join(' ').trim()
+  }
+
+  const wordCount = textOnly ? textOnly.split(/\s+/).filter(Boolean).length : 0
+  const readingTimeMinutes = Math.max(1, Math.ceil(wordCount / 180))
+
+  const formattedDate = new Date(record.created_at).toLocaleDateString('en-GB', {
+    day: '2-digit',
+    month: '2-digit',
+    year: '2-digit',
+  })
+
   return (
     <AppShell>
-      <div className="flex flex-col gap-6 max-w-4xl mx-auto">
-        {/* Navigation & Action Bar */}
-        <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-6 max-w-4xl mx-auto py-2">
+        {/* Navigation Bar & Header Badges (Dreilokale Style) */}
+        <nav aria-label="Breadcrumb and Actions" className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <Link
             href="/"
-            className="flex items-center gap-1.5 text-xs font-semibold text-zinc-400 hover:text-zinc-200 transition-colors"
+            className="inline-flex items-center text-sm font-medium text-teal-400 hover:text-teal-300 transition-colors group"
           >
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className="h-4 w-4 mr-2 transition-transform group-hover:-translate-x-0.5" />
             Back to Vault
           </Link>
 
-          <div className="flex items-center gap-2">
-            <Link
-              href={`/records/${record.id}/edit`}
-              className="flex items-center gap-1.5 rounded-xl border border-zinc-800 bg-zinc-900 px-3.5 py-2 text-xs font-medium text-zinc-300 hover:bg-zinc-800 transition-colors"
-            >
-              <Edit3 className="h-3.5 w-3.5" />
-              Edit
-            </Link>
+          {/* Right Action & Info Badges */}
+          <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+            {record.tags && record.tags.length > 0 && (
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {record.tags.map((tag) => (
+                  <span
+                    key={tag.id}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-zinc-900/90 border border-zinc-800 shadow-sm text-xs font-semibold text-zinc-200"
+                  >
+                    <TagIcon className="h-3 w-3 text-teal-400" />
+                    {tag.name}
+                  </span>
+                ))}
+              </div>
+            )}
 
-            <button
-              onClick={() => {
-                if (confirm('Delete this record permanently? This will also remove any uploaded images.')) {
-                  deleteMutation.mutate()
-                }
-              }}
-              className="rounded-xl border border-zinc-800 bg-zinc-900 p-2 text-zinc-400 hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/20 transition-colors"
-              title="Delete Record"
-            >
-              <Trash2 className="h-4 w-4" />
-            </button>
+            <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-zinc-900/90 border border-zinc-800 shadow-sm text-xs font-medium text-zinc-400">
+              <Calendar className="h-3.5 w-3.5 text-teal-400" />
+              {formattedDate}
+            </span>
+
+            {/* Edit / Delete Buttons */}
+            <div className="inline-flex items-center gap-1.5 pl-1">
+              <Link
+                href={`/records/${record.id}/edit`}
+                className="inline-flex items-center gap-1.5 rounded-full border border-zinc-800 bg-zinc-900/90 px-3.5 py-1.5 text-xs font-medium text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100 transition-colors"
+              >
+                <Edit3 className="h-3 w-3" />
+                Edit
+              </Link>
+
+              <button
+                onClick={() => {
+                  if (confirm('Delete this record permanently? This will also remove any uploaded images.')) {
+                    deleteMutation.mutate()
+                  }
+                }}
+                className="inline-flex items-center justify-center rounded-full border border-zinc-800 bg-zinc-900/90 p-1.5 text-zinc-400 hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/30 transition-colors"
+                title="Delete Record"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            </div>
           </div>
-        </div>
+        </nav>
 
-        {/* Record Header Card */}
-        <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-6 overflow-hidden">
+        {/* Main Editorial Container */}
+        <article className="rounded-3xl border border-zinc-800/80 bg-zinc-900/50 shadow-2xl p-6 sm:p-10 lg:p-12 backdrop-blur-sm">
+          {/* Main H1 Title */}
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-zinc-50 leading-tight mb-8">
+            {record.title}
+          </h1>
+
+          {/* Featured Cover Image (Dreilokale Banner Style) */}
           {record.thumbnail_url && (
-            <div className="relative mb-6 h-56 sm:h-72 w-full overflow-hidden rounded-xl border border-zinc-800 -mt-2">
+            <div className="relative w-full aspect-video rounded-3xl overflow-hidden shadow-2xl mb-8 border border-zinc-800/90">
               <Image
                 src={record.thumbnail_url}
                 alt={record.title}
                 fill
-                sizes="(max-width: 768px) 100vw, 800px"
+                sizes="(max-width: 1024px) 100vw, 960px"
                 className="object-cover"
                 priority
               />
             </div>
           )}
 
-          {record.tags && record.tags.length > 0 && (
-            <div className="flex items-center gap-1.5 mb-3 flex-wrap">
-              {record.tags.map((tag) => (
-                <span key={tag.id} className="rounded-md bg-zinc-800/60 px-2 py-0.5 text-[10px] font-medium text-zinc-400">
-                  #{tag.name}
+          {/* Article / Note Body */}
+          <div className="mt-2 min-h-[120px]">
+            <TiptapRenderer content={record.content} />
+          </div>
+
+          {/* Attached YouTube Video at Bottom */}
+          {isYoutube && record.source_url && (
+            <section aria-label="Attached Video" className="mt-10 rounded-2xl border border-zinc-800 bg-zinc-950/80 p-5 sm:p-6 overflow-hidden">
+              <div className="mb-4 flex items-center justify-between">
+                <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
+                  Attached Video
                 </span>
-              ))}
-            </div>
+                <a
+                  href={record.source_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-xs text-teal-400 hover:text-teal-300 transition-colors"
+                >
+                  <ExternalLink className="h-3.5 w-3.5" />
+                  <span>Open in YouTube</span>
+                </a>
+              </div>
+              <YouTubeEmbed url={record.source_url} title={record.title} />
+            </section>
           )}
 
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-zinc-50 leading-tight">
-            {record.title}
-          </h1>
+          {/* Footer Metadata & Reading Stats */}
+          <footer className="mt-10 flex flex-wrap items-center justify-between gap-4 border-t border-zinc-800/80 pt-6 text-sm text-zinc-400">
+            <div className="flex items-center gap-4 flex-wrap text-xs sm:text-sm">
+              <span className="flex items-center gap-1.5">
+                <Clock className="h-4 w-4 text-teal-400" />
+                Estimated reading time: ~{readingTimeMinutes} min
+              </span>
 
-          {/* Source Link (for articles, books, etc.) */}
-          {record.source_url && !isYoutube && (
-            <div className="mt-3">
-              <a
-                href={record.source_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 text-xs text-amber-400 hover:text-amber-300 transition-colors break-all"
-              >
-                <ExternalLink className="h-3.5 w-3.5 shrink-0" />
-                <span>{record.source_url}</span>
-              </a>
+              <span className="flex items-center gap-1.5">
+                <Eye className="h-4 w-4 text-zinc-500" />
+                {record.read_count} reads
+              </span>
+
+              <span className="flex items-center gap-1.5">
+                <Sparkles className="h-4 w-4 text-zinc-500" />
+                Stage {record.review_stage}
+              </span>
             </div>
-          )}
 
-          {/* Stats & Spaced Review Info */}
-          <div className="mt-6 flex flex-wrap items-center gap-4 border-t border-zinc-800/60 pt-4 text-xs text-zinc-400">
-            <span className="flex items-center gap-1.5">
-              <Eye className="h-3.5 w-3.5 text-zinc-500" />
-              {record.read_count} reads
-            </span>
-
-            <span className="flex items-center gap-1.5">
-              <Sparkles className="h-3.5 w-3.5 text-zinc-500" />
-              Stage {record.review_stage} (1/7/30d schedule)
-            </span>
-
-            <span className="flex items-center gap-1.5">
-              <Calendar className="h-3.5 w-3.5 text-zinc-500" />
-              Next review:{' '}
-              <strong className={isDue ? 'text-amber-400 font-bold' : 'text-zinc-300'}>
+            <div className="flex items-center gap-2 text-xs sm:text-sm">
+              <Calendar className="h-4 w-4 text-teal-400" />
+              <span>Next review:</span>
+              <strong className={isDue ? 'text-teal-400 font-bold' : 'text-zinc-300'}>
                 {new Date(record.next_review_at).toLocaleDateString(undefined, {
                   month: 'short',
                   day: 'numeric',
                 })}
               </strong>
-            </span>
-          </div>
+            </div>
+          </footer>
 
           {/* Direct Review Trigger if Due */}
           {isDue && (
-            <div className="mt-5 flex items-center justify-between rounded-xl border border-amber-500/30 bg-amber-500/10 p-4">
-              <span className="text-xs font-semibold text-amber-400">
-                This record is due for spaced review today!
-              </span>
+            <div className="mt-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 rounded-2xl border border-teal-500/30 bg-teal-500/10 p-4 sm:p-5">
+              <div>
+                <span className="text-xs font-semibold text-teal-400 block">
+                  This record is due for spaced review today!
+                </span>
+                <span className="text-[11px] text-zinc-400">
+                  Rate your recall to advance to the next spaced stage.
+                </span>
+              </div>
 
-              <div className="flex gap-2">
+              <div className="flex gap-2 self-end sm:self-auto">
                 <button
                   onClick={() => reviewMutation.mutate('forgot')}
                   disabled={reviewMutation.isPending}
-                  className="flex items-center gap-1 rounded-lg bg-zinc-800 px-3 py-1.5 text-xs font-semibold text-red-400 hover:bg-zinc-700 transition-colors disabled:opacity-50"
+                  className="flex items-center gap-1 rounded-xl bg-zinc-900 border border-zinc-800 px-3.5 py-2 text-xs font-semibold text-red-400 hover:bg-zinc-800 transition-colors disabled:opacity-50"
                 >
                   <RotateCcw className="h-3 w-3" />
                   Forgot
@@ -277,7 +343,7 @@ export default function RecordDetailPage({ params }: { params: Promise<{ id: str
                 <button
                   onClick={() => reviewMutation.mutate('remembered')}
                   disabled={reviewMutation.isPending}
-                  className="flex items-center gap-1 rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-bold text-zinc-950 hover:bg-amber-400 transition-colors disabled:opacity-50"
+                  className="flex items-center gap-1 rounded-xl bg-teal-500 px-4 py-2 text-xs font-bold text-zinc-950 hover:bg-teal-400 transition-colors disabled:opacity-50 shadow-sm"
                 >
                   <Check className="h-3.5 w-3.5 stroke-[3]" />
                   Remembered
@@ -285,33 +351,7 @@ export default function RecordDetailPage({ params }: { params: Promise<{ id: str
               </div>
             </div>
           )}
-        </div>
-
-        {/* Content Body */}
-        <div className="rounded-2xl border border-zinc-800/80 bg-zinc-950 p-6 shadow-sm min-h-[300px]">
-          <TiptapRenderer content={record.content} />
-        </div>
-
-        {/* Embedded YouTube Player (Below Body) */}
-        {isYoutube && record.source_url && (
-          <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-6 overflow-hidden">
-            <div className="mb-4 flex items-center justify-between">
-              <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
-                Attached Video
-              </span>
-              <a
-                href={record.source_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 text-xs text-amber-400 hover:text-amber-300 transition-colors"
-              >
-                <ExternalLink className="h-3.5 w-3.5" />
-                <span>Open in YouTube</span>
-              </a>
-            </div>
-            <YouTubeEmbed url={record.source_url} title={record.title} />
-          </div>
-        )}
+        </article>
       </div>
     </AppShell>
   )
