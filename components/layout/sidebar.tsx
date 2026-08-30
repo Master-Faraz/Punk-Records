@@ -1,8 +1,9 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { Disc3, BookOpen, Brain, Dices, Plus, LogOut, Settings as SettingsIcon } from 'lucide-react'
+import { BookOpen, Brain, Dices, Plus, LogOut, Settings as SettingsIcon } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
 interface SidebarProps {
@@ -54,8 +55,15 @@ export function Sidebar({ dueCount = 0, userEmail, onQuickCapture }: SidebarProp
       <div className="flex flex-col gap-6">
         {/* Logo & Brand */}
         <Link href="/" className="flex items-center gap-3 px-2 py-1 group">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500/10 text-amber-400 ring-1 ring-amber-500/20 group-hover:ring-amber-500/40 transition-all">
-            <Disc3 className="h-5 w-5 animate-[spin_12s_linear_infinite]" />
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl overflow-hidden bg-zinc-900 ring-1 ring-amber-500/20 group-hover:ring-amber-500/50 transition-all shadow-sm">
+            <Image
+              src="/images/punk-records-logo.png"
+              alt="Punk Records Logo"
+              width={36}
+              height={36}
+              className="h-full w-full object-cover transition-transform group-hover:scale-105"
+              priority
+            />
           </div>
           <div>
             <span className="font-bold text-sm text-zinc-100 tracking-tight block">Punk Records</span>

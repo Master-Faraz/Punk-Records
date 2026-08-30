@@ -1,10 +1,11 @@
 'use client'
 
+import Image from 'next/image'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import { Disc3, Loader2, ArrowRight } from 'lucide-react'
+import { Loader2, ArrowRight } from 'lucide-react'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -37,8 +38,15 @@ export default function LoginPage() {
   return (
     <div className="w-full rounded-2xl border border-zinc-800/80 bg-zinc-900/60 p-8 shadow-2xl backdrop-blur-xl">
       <div className="mb-8 flex flex-col items-center text-center">
-        <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-400 ring-1 ring-amber-500/20">
-          <Disc3 className="h-6 w-6 animate-[spin_10s_linear_infinite]" />
+        <div className="mb-3 flex h-16 w-16 items-center justify-center rounded-2xl overflow-hidden bg-zinc-900 shadow-xl shadow-red-950/30 ring-1 ring-amber-500/30">
+          <Image
+            src="/images/punk-records-logo.png"
+            alt="Punk Records Logo"
+            width={64}
+            height={64}
+            className="h-full w-full object-cover"
+            priority
+          />
         </div>
         <h1 className="text-2xl font-bold tracking-tight text-zinc-50">Punk Records</h1>
         <p className="mt-1 text-sm text-zinc-400">Sign in to your personal knowledge vault</p>

@@ -1,12 +1,13 @@
 'use client'
 
+import Image from 'next/image'
 import { useState, useEffect, type ReactNode } from 'react'
 import { Sidebar } from './sidebar'
 import { BottomNav } from './bottom-nav'
 import { QuickCaptureModal } from '../capture/quick-capture-modal'
 import { useQuery } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
-import { Disc3, Plus } from 'lucide-react'
+import { Plus } from 'lucide-react'
 
 export function AppShell({ children }: { children: ReactNode }) {
   const [isQuickCaptureOpen, setIsQuickCaptureOpen] = useState(false)
@@ -73,8 +74,15 @@ export function AppShell({ children }: { children: ReactNode }) {
         {/* Mobile Top Header */}
         <header className="flex md:hidden h-14 items-center justify-between border-b border-zinc-800/80 bg-zinc-950/80 px-4 backdrop-blur-md">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-500/10 text-amber-400 ring-1 ring-amber-500/20">
-              <Disc3 className="h-4 w-4 animate-[spin_10s_linear_infinite]" />
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg overflow-hidden bg-zinc-900 ring-1 ring-amber-500/20 shadow-sm">
+              <Image
+                src="/images/punk-records-logo.png"
+                alt="Punk Records Logo"
+                width={32}
+                height={32}
+                className="h-full w-full object-cover"
+                priority
+              />
             </div>
             <span className="font-bold text-sm tracking-tight text-zinc-100">Punk Records</span>
           </div>
