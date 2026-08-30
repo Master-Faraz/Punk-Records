@@ -5,6 +5,9 @@ import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { AppShell } from '@/components/layout/app-shell'
 import { TiptapRenderer } from '@/components/editor/tiptap-renderer'
+import { YouTubeEmbed, getYouTubeVideoId } from '@/components/media/youtube-embed'
+import { deleteRecordWithAssets } from '@/lib/supabase/cleanup'
+import { getUserSettings, computeNextReview } from '@/lib/settings'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import type { RecordItem } from '@/types/database'
@@ -12,7 +15,6 @@ import {
   ArrowLeft,
   Edit3,
   Trash2,
-  Star,
   ExternalLink,
   Eye,
   Calendar,
@@ -78,27 +80,8 @@ export default function RecordDetailPage({ params }: { params: Promise<{ id: str
       const supabase = createClient()
       const currentStage = record.review_stage || 0
 
-      let nextStage = 1
-      let nextIntervalDays = 1
-
-      if (result === 'remembered') {
-        if (currentStage === 0 || currentStage === 1) {
-          nextStage = 2
-          nextIntervalDays = 7
-        } else if (currentStage === 2) {
-          nextStage = 3
-          nextIntervalDays = 30
-        } else {
-          nextStage = 3
-          nextIntervalDays = 30 // repeats at 30 days
-        }
-      } else {
-        // forgot -> resets to 1-day step
-        nextStage = 1
-        nextIntervalDays = 1
-      }
-
-      const nextReviewAt = new Date(Date.now() + nextIntervalDays * 24 * 60 * 60 * 1000).toISOString()
+      const settings = await getUserSettings()
+      const { nextStage, nextReviewAt } = computeNextReview(currentStage, result, settings)
       const nowIso = new Date().toISOString()
 
       // 1. Record review history
@@ -131,12 +114,11 @@ export default function RecordDetailPage({ params }: { params: Promise<{ id: str
     },
   })
 
-  // Delete mutation
+  // Delete mutation with storage asset cleanup
   const deleteMutation = useMutation({
     mutationFn: async () => {
-      const supabase = createClient()
-      const { error } = await supabase.from('records').delete().eq('id', id)
-      if (error) throw error
+      if (!record) return
+      await deleteRecordWithAssets(record)
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['records'] })
@@ -170,6 +152,7 @@ export default function RecordDetailPage({ params }: { params: Promise<{ id: str
   }
 
   const isDue = new Date(record.next_review_at) <= new Date()
+  const isYoutube = !!getYouTubeVideoId(record.source_url)
 
   return (
     <AppShell>
@@ -195,7 +178,7 @@ export default function RecordDetailPage({ params }: { params: Promise<{ id: str
 
             <button
               onClick={() => {
-                if (confirm('Delete this record permanently?')) {
+                if (confirm('Delete this record permanently? This will also remove any uploaded images.')) {
                   deleteMutation.mutate()
                 }
               }}
@@ -222,23 +205,29 @@ export default function RecordDetailPage({ params }: { params: Promise<{ id: str
             </div>
           )}
 
-          <div className="flex items-center gap-2 mb-3">
-            <span className="rounded-md bg-zinc-800 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-400">
-              {record.source_type}
-            </span>
-
-            {record.tags && record.tags.map((tag) => (
-              <span key={tag.id} className="rounded-md bg-zinc-800/60 px-2 py-0.5 text-[10px] font-medium text-zinc-400">
-                #{tag.name}
-              </span>
-            ))}
-          </div>
+          {record.tags && record.tags.length > 0 && (
+            <div className="flex items-center gap-1.5 mb-3 flex-wrap">
+              {record.tags.map((tag) => (
+                <span key={tag.id} className="rounded-md bg-zinc-800/60 px-2 py-0.5 text-[10px] font-medium text-zinc-400">
+                  #{tag.name}
+                </span>
+              ))}
+            </div>
+          )}
 
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-zinc-50 leading-tight">
             {record.title}
           </h1>
 
-          {record.source_url && (
+          {/* Embedded YouTube Player if source is YouTube */}
+          {isYoutube && record.source_url && (
+            <div className="mt-4">
+              <YouTubeEmbed url={record.source_url} title={record.title} />
+            </div>
+          )}
+
+          {/* Source Link (for articles, books, etc.) */}
+          {record.source_url && !isYoutube && (
             <div className="mt-3">
               <a
                 href={record.source_url}

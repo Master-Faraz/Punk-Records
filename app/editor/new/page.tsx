@@ -8,7 +8,7 @@ import { TiptapEditor } from '@/components/editor/tiptap-editor'
 import { TagInput } from '@/components/tags/tag-input'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
-import type { SourceType } from '@/types/database'
+import { processAndUploadPendingAssets } from '@/lib/supabase/asset-uploader'
 import { ArrowLeft, Save, Loader2, Link2, Sparkles, Image as ImageIcon, X } from 'lucide-react'
 import Link from 'next/link'
 
@@ -19,44 +19,17 @@ export default function NewRecordPage() {
 
   const [title, setTitle] = useState('')
   const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null)
-  const [isUploadingThumb, setIsUploadingThumb] = useState(false)
   const [content, setContent] = useState<any>(null)
   const [sourceUrl, setSourceUrl] = useState('')
-  const [sourceType, setSourceType] = useState<SourceType>('note')
   const [tags, setTags] = useState<string[]>([])
 
-  const handleThumbnailUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Store local preview without uploading until Save
+  const handleThumbnailSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-
-    try {
-      setIsUploadingThumb(true)
-      const supabase = createClient()
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-      if (!user) return
-
-      const fileExt = file.name.split('.').pop()
-      const fileName = `${user.id}/thumb-${Date.now()}.${fileExt}`
-
-      const { data, error } = await supabase.storage
-        .from('record-images')
-        .upload(fileName, file, { cacheControl: '3600', upsert: false })
-
-      if (error) throw error
-
-      const {
-        data: { publicUrl },
-      } = supabase.storage.from('record-images').getPublicUrl(data.path)
-
-      setThumbnailUrl(publicUrl)
-    } catch (err) {
-      console.error('Thumbnail upload failed:', err)
-      alert('Failed to upload thumbnail image.')
-    } finally {
-      setIsUploadingThumb(false)
-    }
+    const localUrl = URL.createObjectURL(file)
+    setThumbnailUrl(localUrl)
+    if (thumbnailInputRef.current) thumbnailInputRef.current.value = ''
   }
 
   const saveMutation = useMutation({
@@ -68,15 +41,26 @@ export default function NewRecordPage() {
 
       if (!user) throw new Error('User not authenticated')
 
-      // 1. Insert record
+      // 1. Upload any pending local blob images (thumbnail & Tiptap images)
+      const { finalThumbnailUrl, finalContent } = await processAndUploadPendingAssets({
+        thumbnailUrl,
+        content,
+      })
+
+      // 2. Auto-detect if source is youtube
+      const cleanUrl = sourceUrl.trim()
+      const isYoutube = cleanUrl.includes('youtube.com') || cleanUrl.includes('youtu.be')
+      const sourceType = isYoutube ? 'youtube' : cleanUrl ? 'article' : 'note'
+
+      // 3. Insert record into database
       const { data: record, error: recordError } = await supabase
         .from('records')
         .insert({
           user_id: user.id,
           title: title.trim(),
-          thumbnail_url: thumbnailUrl,
-          content: content || { type: 'doc', content: [{ type: 'paragraph' }] },
-          source_url: sourceUrl.trim() || null,
+          thumbnail_url: finalThumbnailUrl,
+          content: finalContent,
+          source_url: cleanUrl || null,
           source_type: sourceType,
           next_review_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
         })
@@ -85,7 +69,7 @@ export default function NewRecordPage() {
 
       if (recordError) throw recordError
 
-      // 2. Handle tags if any
+      // 4. Handle tags
       if (tags.length > 0) {
         for (const tagName of tags) {
           const { data: tagData } = await supabase
@@ -105,27 +89,21 @@ export default function NewRecordPage() {
 
       return record
     },
-    onSuccess: (record) => {
-      queryClient.invalidateQueries({ queryKey: ['records'] })
-      queryClient.invalidateQueries({ queryKey: ['tags'] })
-      queryClient.invalidateQueries({ queryKey: ['due-count'] })
+    onSuccess: async (record) => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['records'], refetchType: 'all' }),
+        queryClient.invalidateQueries({ queryKey: ['tags'], refetchType: 'all' }),
+        queryClient.invalidateQueries({ queryKey: ['due-count'], refetchType: 'all' }),
+      ])
       router.push(`/records/${record.id}`)
+      router.refresh()
     },
   })
-
-  const handleAutoDetectSource = (url: string) => {
-    setSourceUrl(url)
-    if (url.includes('youtube.com') || url.includes('youtu.be')) {
-      setSourceType('youtube')
-    } else if (url.startsWith('http')) {
-      setSourceType('article')
-    }
-  }
 
   return (
     <AppShell>
       <div className="flex flex-col gap-6 max-w-4xl mx-auto">
-        {/* Navigation & Action Bar */}
+        {/* Top Navigation & Action Bar */}
         <div className="flex items-center justify-between">
           <Link
             href="/"
@@ -177,14 +155,12 @@ export default function NewRecordPage() {
           </div>
 
           {thumbnailUrl ? (
-            <div className="relative h-44 w-full overflow-hidden rounded-xl border border-zinc-800">
-              <Image
+            <div className="relative h-48 w-full overflow-hidden rounded-xl border border-zinc-800">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
                 src={thumbnailUrl}
                 alt="Record Thumbnail"
-                fill
-                sizes="(max-width: 768px) 100vw, 800px"
-                className="object-cover"
-                loading="lazy"
+                className="h-full w-full object-cover"
               />
             </div>
           ) : (
@@ -192,18 +168,17 @@ export default function NewRecordPage() {
               <button
                 type="button"
                 onClick={() => thumbnailInputRef.current?.click()}
-                disabled={isUploadingThumb}
                 className="flex items-center gap-2 rounded-xl border border-dashed border-zinc-700 bg-zinc-950 px-4 py-2.5 text-xs font-medium text-zinc-300 hover:border-amber-500 hover:text-amber-400 transition-colors"
               >
-                {isUploadingThumb ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImageIcon className="h-4 w-4" />}
-                Upload Thumbnail
+                <ImageIcon className="h-4 w-4" />
+                Choose Thumbnail Image
               </button>
               <input
                 ref={thumbnailInputRef}
                 type="file"
                 accept="image/*"
                 className="hidden"
-                onChange={handleThumbnailUpload}
+                onChange={handleThumbnailSelect}
               />
               <span className="text-xs text-zinc-500">or</span>
               <input
@@ -229,31 +204,17 @@ export default function NewRecordPage() {
           />
         </div>
 
-        {/* Metadata Controls (Source URL, Type, Tags) */}
+        {/* Metadata Controls: Source link and Tags */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-4">
-          <div className="flex gap-2">
-            <div className="relative flex-1">
-              <Link2 className="absolute left-3.5 top-3 h-4 w-4 text-zinc-500" />
-              <input
-                type="url"
-                value={sourceUrl}
-                onChange={(e) => handleAutoDetectSource(e.target.value)}
-                placeholder="Source link (optional)..."
-                className="w-full rounded-xl border border-zinc-800 bg-zinc-950 pl-10 pr-3 py-2 text-xs text-zinc-200 placeholder-zinc-500 focus:border-amber-500/50 focus:outline-none"
-              />
-            </div>
-
-            <select
-              value={sourceType}
-              onChange={(e) => setSourceType(e.target.value as SourceType)}
-              className="rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-xs text-zinc-200 focus:border-amber-500/50 focus:outline-none"
-            >
-              <option value="note">Note</option>
-              <option value="youtube">YouTube</option>
-              <option value="article">Article</option>
-              <option value="book">Book</option>
-              <option value="other">Other</option>
-            </select>
+          <div className="relative">
+            <Link2 className="absolute left-3.5 top-3 h-4 w-4 text-zinc-500" />
+            <input
+              type="url"
+              value={sourceUrl}
+              onChange={(e) => setSourceUrl(e.target.value)}
+              placeholder="Source link / YouTube video (optional)..."
+              className="w-full rounded-xl border border-zinc-800 bg-zinc-950 pl-10 pr-3.5 py-2.5 text-xs text-zinc-200 placeholder-zinc-500 focus:border-amber-500/50 focus:outline-none"
+            />
           </div>
 
           <TagInput selectedTags={tags} onChange={setTags} />

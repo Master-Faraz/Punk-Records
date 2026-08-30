@@ -24,6 +24,7 @@ export interface Tag {
   user_id: string
   name: string
   created_at: string
+  count?: number
 }
 
 export interface RecordTag {
@@ -41,6 +42,21 @@ export interface Review {
   previous_stage: number
   next_stage: number
   created_at: string
+}
+
+export interface UserSettings {
+  user_id?: string
+  stage_1_days: number
+  stage_2_days: number
+  stage_3_days: number
+  random_cooldown_days: number
+}
+
+export const DEFAULT_USER_SETTINGS: UserSettings = {
+  stage_1_days: 1,
+  stage_2_days: 7,
+  stage_3_days: 30,
+  random_cooldown_days: 7,
 }
 
 export type ReviewInterval = 1 | 7 | 30

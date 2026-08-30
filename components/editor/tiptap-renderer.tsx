@@ -4,11 +4,13 @@ import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import LinkExtension from '@tiptap/extension-link'
 import ImageExtension from '@tiptap/extension-image'
+import Youtube from '@tiptap/extension-youtube'
 import Underline from '@tiptap/extension-underline'
 import Highlight from '@tiptap/extension-highlight'
 import TaskList from '@tiptap/extension-task-list'
 import TaskItem from '@tiptap/extension-task-item'
 import TextAlign from '@tiptap/extension-text-align'
+import { Columns, Column } from './columns-extension'
 
 const CustomImage = ImageExtension.extend({
   addAttributes() {
@@ -23,7 +25,7 @@ const CustomImage = ImageExtension.extend({
       width: {
         default: '100%',
         renderHTML: (attributes) => ({
-          style: `width: ${attributes.width || '100%'};`,
+          style: `width: ${attributes.width || '100%'}; max-width: 100%;`,
         }),
       },
     }
@@ -62,6 +64,14 @@ export function TiptapRenderer({ content }: TiptapRendererProps) {
           rel: 'noopener noreferrer',
         },
       }),
+      Youtube.configure({
+        inline: false,
+        HTMLAttributes: {
+          class: 'w-full rounded-2xl border border-zinc-800 my-4 aspect-video shadow-lg',
+        },
+      }),
+      Columns,
+      Column,
       CustomImage,
     ],
     content: content || '',

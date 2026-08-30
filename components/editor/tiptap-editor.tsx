@@ -3,13 +3,15 @@
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import LinkExtension from '@tiptap/extension-link'
-import ImageExtension from '@tiptap/extension-image'
+import Youtube from '@tiptap/extension-youtube'
 import Placeholder from '@tiptap/extension-placeholder'
 import Underline from '@tiptap/extension-underline'
 import Highlight from '@tiptap/extension-highlight'
 import TaskList from '@tiptap/extension-task-list'
 import TaskItem from '@tiptap/extension-task-item'
 import TextAlign from '@tiptap/extension-text-align'
+import { ResizableImageExtension } from './resizable-image'
+import { Columns, Column } from './columns-extension'
 import {
   Bold,
   Italic,
@@ -31,35 +33,13 @@ import {
   AlignRight,
   Image as ImageIcon,
   Link as LinkIcon,
+  Video,
+  Columns2,
   Undo,
   Redo,
   Loader2,
-  Maximize2,
-  Minimize2,
 } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
 import { useRef, useState } from 'react'
-
-// Custom Image Extension supporting width and alignment attributes
-const CustomImage = ImageExtension.extend({
-  addAttributes() {
-    return {
-      ...this.parent?.(),
-      alignment: {
-        default: 'center',
-        renderHTML: (attributes) => ({
-          class: `align-${attributes.alignment || 'center'}`,
-        }),
-      },
-      width: {
-        default: '100%',
-        renderHTML: (attributes) => ({
-          style: `width: ${attributes.width || '100%'};`,
-        }),
-      },
-    }
-  },
-})
 
 interface TiptapEditorProps {
   initialContent?: any
@@ -74,8 +54,6 @@ export function TiptapEditor({
 }: TiptapEditorProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [isUploading, setIsUploading] = useState(false)
-  const [selectedImageWidth, setSelectedImageWidth] = useState<'33%' | '50%' | '75%' | '100%'>('100%')
-  const [selectedImageAlignment, setSelectedImageAlignment] = useState<'left' | 'center' | 'right'>('center')
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -101,7 +79,15 @@ export function TiptapEditor({
           class: 'text-amber-400 underline underline-offset-2 hover:text-amber-300',
         },
       }),
-      CustomImage,
+      Youtube.configure({
+        inline: false,
+        HTMLAttributes: {
+          class: 'w-full rounded-2xl border border-zinc-800 my-4 aspect-video shadow-lg',
+        },
+      }),
+      Columns,
+      Column,
+      ResizableImageExtension,
       Placeholder.configure({
         placeholder,
         emptyEditorClass: 'is-editor-empty',
@@ -120,50 +106,23 @@ export function TiptapEditor({
 
   if (!editor) return null
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Insert local image preview immediately (uploaded only when saving/updating record)
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
 
-    try {
-      setIsUploading(true)
-      const supabase = createClient()
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-      if (!user) return
+    const tempUrl = URL.createObjectURL(file)
+    editor
+      .chain()
+      .focus()
+      .setImage({
+        src: tempUrl,
+        alignment: 'center',
+        width: '100%',
+      } as any)
+      .run()
 
-      const fileExt = file.name.split('.').pop()
-      const fileName = `${user.id}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`
-
-      const { data, error } = await supabase.storage
-        .from('record-images')
-        .upload(fileName, file, {
-          cacheControl: '3600',
-          upsert: false,
-        })
-
-      if (error) throw error
-
-      const {
-        data: { publicUrl },
-      } = supabase.storage.from('record-images').getPublicUrl(data.path)
-
-      editor
-        .chain()
-        .focus()
-        .setImage({
-          src: publicUrl,
-          alignment: selectedImageAlignment,
-          width: selectedImageWidth,
-        } as any)
-        .run()
-    } catch (err) {
-      console.error('Image upload failed:', err)
-      alert('Failed to upload image. Please ensure file is under 5MB.')
-    } finally {
-      setIsUploading(false)
-      if (fileInputRef.current) fileInputRef.current.value = ''
-    }
+    if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
   const setLink = () => {
@@ -175,6 +134,15 @@ export function TiptapEditor({
       return
     }
     editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run()
+  }
+
+  const addYoutubeVideo = () => {
+    const url = window.prompt('Enter YouTube Video URL')
+    if (url) {
+      editor.commands.setYoutubeVideo({
+        src: url,
+      })
+    }
   }
 
   return (
@@ -353,6 +321,18 @@ export function TiptapEditor({
 
         <div className="h-4 w-[1px] bg-zinc-800 mx-1" />
 
+        {/* 2-Column Layout */}
+        <button
+          type="button"
+          onClick={() => editor.chain().focus().setColumns().run()}
+          className="rounded-lg p-1.5 hover:bg-zinc-800 hover:text-amber-400 text-zinc-400 transition-colors"
+          title="Insert 2 Columns (Side by Side Image & Text)"
+        >
+          <Columns2 className="h-4 w-4" />
+        </button>
+
+        <div className="h-4 w-[1px] bg-zinc-800 mx-1" />
+
         {/* Text Alignment */}
         <button
           type="button"
@@ -389,7 +369,7 @@ export function TiptapEditor({
 
         <div className="h-4 w-[1px] bg-zinc-800 mx-1" />
 
-        {/* Link */}
+        {/* Link & Media */}
         <button
           type="button"
           onClick={setLink}
@@ -401,13 +381,22 @@ export function TiptapEditor({
           <LinkIcon className="h-4 w-4" />
         </button>
 
+        <button
+          type="button"
+          onClick={addYoutubeVideo}
+          className="rounded-lg p-1.5 hover:bg-zinc-800 hover:text-zinc-200 transition-colors text-zinc-400 hover:text-red-400"
+          title="Embed YouTube Video"
+        >
+          <Video className="h-4 w-4" />
+        </button>
+
         {/* Image Upload */}
         <button
           type="button"
           onClick={() => fileInputRef.current?.click()}
           disabled={isUploading}
           className="flex items-center gap-1 rounded-lg p-1.5 hover:bg-zinc-800 hover:text-zinc-200 transition-colors text-amber-400"
-          title="Insert & Position Image"
+          title="Insert Image (Click image inside editor to resize & align)"
         >
           {isUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImageIcon className="h-4 w-4" />}
         </button>
@@ -440,45 +429,6 @@ export function TiptapEditor({
         >
           <Redo className="h-4 w-4" />
         </button>
-      </div>
-
-      {/* Secondary Image Control Bar (Placement & Size settings) */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-zinc-800/60 bg-zinc-900/40 px-3 py-1.5 text-[11px] text-zinc-400">
-        <div className="flex items-center gap-2">
-          <span className="font-semibold text-zinc-500">Image Placement:</span>
-          {(['left', 'center', 'right'] as const).map((align) => (
-            <button
-              key={align}
-              type="button"
-              onClick={() => setSelectedImageAlignment(align)}
-              className={`rounded px-2 py-0.5 capitalize transition-colors ${
-                selectedImageAlignment === align
-                  ? 'bg-amber-500/20 text-amber-400 font-semibold'
-                  : 'hover:bg-zinc-800 hover:text-zinc-300'
-              }`}
-            >
-              {align}
-            </button>
-          ))}
-        </div>
-
-        <div className="flex items-center gap-2">
-          <span className="font-semibold text-zinc-500">Size:</span>
-          {(['33%', '50%', '75%', '100%'] as const).map((w) => (
-            <button
-              key={w}
-              type="button"
-              onClick={() => setSelectedImageWidth(w)}
-              className={`rounded px-2 py-0.5 transition-colors ${
-                selectedImageWidth === w
-                  ? 'bg-amber-500/20 text-amber-400 font-semibold'
-                  : 'hover:bg-zinc-800 hover:text-zinc-300'
-              }`}
-            >
-              {w}
-            </button>
-          ))}
-        </div>
       </div>
 
       {/* Editor Content Body */}

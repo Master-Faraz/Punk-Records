@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { Disc3, BookOpen, Brain, Dices, Plus, LogOut, Tags } from 'lucide-react'
+import { Disc3, BookOpen, Brain, Dices, Plus, LogOut, Settings as SettingsIcon } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
 interface SidebarProps {
@@ -39,6 +39,12 @@ export function Sidebar({ dueCount = 0, userEmail, onQuickCapture }: SidebarProp
       label: 'Random',
       href: '/random',
       icon: Dices,
+      badge: null,
+    },
+    {
+      label: 'Settings',
+      href: '/settings',
+      icon: SettingsIcon,
       badge: null,
     },
   ]

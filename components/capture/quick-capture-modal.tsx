@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { X, Zap, Loader2, Link2, Sparkles } from 'lucide-react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
-import type { SourceType } from '@/types/database'
+import { TagInput } from '@/components/tags/tag-input'
 
 interface QuickCaptureModalProps {
   isOpen: boolean
@@ -16,7 +16,7 @@ export function QuickCaptureModal({ isOpen, onClose }: QuickCaptureModalProps) {
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
   const [sourceUrl, setSourceUrl] = useState('')
-  const [sourceType, setSourceType] = useState<SourceType>('note')
+  const [tags, setTags] = useState<string[]>([])
 
   const createMutation = useMutation({
     mutationFn: async () => {
@@ -27,7 +27,10 @@ export function QuickCaptureModal({ isOpen, onClose }: QuickCaptureModalProps) {
 
       if (!user) throw new Error('User not authenticated')
 
-      // Convert simple text into Tiptap JSON document structure
+      const cleanUrl = sourceUrl.trim()
+      const isYoutube = cleanUrl.includes('youtube.com') || cleanUrl.includes('youtu.be')
+      const sourceType = isYoutube ? 'youtube' : cleanUrl ? 'article' : 'note'
+
       const tiptapJson = {
         type: 'doc',
         content: content
@@ -39,43 +42,55 @@ export function QuickCaptureModal({ isOpen, onClose }: QuickCaptureModalProps) {
           })),
       }
 
-      const { data, error } = await supabase
+      // 1. Insert record
+      const { data: record, error: recordError } = await supabase
         .from('records')
         .insert({
           user_id: user.id,
           title: title.trim(),
           content: tiptapJson.content.length > 0 ? tiptapJson : { type: 'doc', content: [{ type: 'paragraph' }] },
-          source_url: sourceUrl.trim() || null,
+          source_url: cleanUrl || null,
           source_type: sourceType,
-          next_review_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 1 day from now
+          next_review_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
         })
         .select()
         .single()
 
-      if (error) throw error
-      return data
+      if (recordError) throw recordError
+
+      // 2. Insert tags
+      if (tags.length > 0) {
+        for (const tagName of tags) {
+          const { data: tagData } = await supabase
+            .from('tags')
+            .upsert({ user_id: user.id, name: tagName }, { onConflict: 'user_id,name' })
+            .select()
+            .single()
+
+          if (tagData) {
+            await supabase.from('record_tags').insert({
+              record_id: record.id,
+              tag_id: tagData.id,
+            })
+          }
+        }
+      }
+
+      return record
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['records'] })
+      queryClient.invalidateQueries({ queryKey: ['tags'] })
       queryClient.invalidateQueries({ queryKey: ['due-count'] })
       setTitle('')
       setContent('')
       setSourceUrl('')
-      setSourceType('note')
+      setTags([])
       onClose()
     },
   })
 
   if (!isOpen) return null
-
-  const handleAutoDetectSource = (url: string) => {
-    setSourceUrl(url)
-    if (url.includes('youtube.com') || url.includes('youtu.be')) {
-      setSourceType('youtube')
-    } else if (url.startsWith('http')) {
-      setSourceType('article')
-    }
-  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-150">
@@ -118,7 +133,7 @@ export function QuickCaptureModal({ isOpen, onClose }: QuickCaptureModalProps) {
 
           <div>
             <textarea
-              rows={4}
+              rows={3}
               value={content}
               onChange={(e) => setContent(e.target.value)}
               placeholder="Paste notes, summary, key highlights, or thoughts..."
@@ -126,30 +141,18 @@ export function QuickCaptureModal({ isOpen, onClose }: QuickCaptureModalProps) {
             />
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="relative flex-1">
-              <Link2 className="absolute left-3 top-3 h-4 w-4 text-zinc-500" />
-              <input
-                type="url"
-                value={sourceUrl}
-                onChange={(e) => handleAutoDetectSource(e.target.value)}
-                placeholder="Source link (YouTube, article...)"
-                className="w-full rounded-xl border border-zinc-800 bg-zinc-950 pl-9 pr-3.5 py-2 text-xs text-zinc-300 placeholder-zinc-500 focus:border-amber-500/50 focus:outline-none focus:ring-1 focus:ring-amber-500/50"
-              />
-            </div>
-
-            <select
-              value={sourceType}
-              onChange={(e) => setSourceType(e.target.value as SourceType)}
-              className="rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-xs text-zinc-300 focus:border-amber-500/50 focus:outline-none focus:ring-1 focus:ring-amber-500/50"
-            >
-              <option value="note">Note</option>
-              <option value="youtube">YouTube</option>
-              <option value="article">Article</option>
-              <option value="book">Book</option>
-              <option value="other">Other</option>
-            </select>
+          <div className="relative">
+            <Link2 className="absolute left-3 top-3 h-4 w-4 text-zinc-500" />
+            <input
+              type="url"
+              value={sourceUrl}
+              onChange={(e) => setSourceUrl(e.target.value)}
+              placeholder="Source link / YouTube video (optional)..."
+              className="w-full rounded-xl border border-zinc-800 bg-zinc-950 pl-9 pr-3.5 py-2.5 text-xs text-zinc-300 placeholder-zinc-500 focus:border-amber-500/50 focus:outline-none focus:ring-1 focus:ring-amber-500/50"
+            />
           </div>
+
+          <TagInput selectedTags={tags} onChange={setTags} />
 
           <div className="flex items-center justify-between pt-2 border-t border-zinc-800/80">
             <span className="text-[11px] text-zinc-500 flex items-center gap-1">

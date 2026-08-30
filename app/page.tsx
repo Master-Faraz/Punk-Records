@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Image from 'next/image'
 import { AppShell } from '@/components/layout/app-shell'
+import { deleteRecordWithAssets } from '@/lib/supabase/cleanup'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import type { RecordItem, Tag } from '@/types/database'
@@ -22,11 +23,13 @@ import {
   X,
 } from 'lucide-react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 
 export default function VaultPage() {
+  const router = useRouter()
   const queryClient = useQueryClient()
   const [searchQuery, setSearchQuery] = useState('')
-  const [selectedType, setSelectedType] = useState<string>('all')
+  const [filterView, setFilterView] = useState<'all' | 'favorites'>('all')
   const [selectedTag, setSelectedTag] = useState<string>('all')
   const [sortBy, setSortBy] = useState<'newest' | 'read_count' | 'next_review'>('newest')
 
@@ -53,7 +56,7 @@ export default function VaultPage() {
 
   // Fetch all records with joined tags
   const { data: records = [], isLoading } = useQuery<RecordItem[]>({
-    queryKey: ['records', selectedType, sortBy],
+    queryKey: ['records', filterView, sortBy],
     queryFn: async () => {
       const supabase = createClient()
       const {
@@ -73,10 +76,8 @@ export default function VaultPage() {
         .eq('user_id', user.id)
         .eq('is_archived', false)
 
-      if (selectedType === 'favorites') {
+      if (filterView === 'favorites') {
         query = query.eq('is_favorite', true)
-      } else if (selectedType !== 'all') {
-        query = query.eq('source_type', selectedType)
       }
 
       if (sortBy === 'newest') {
@@ -109,10 +110,10 @@ export default function VaultPage() {
     },
     onMutate: async ({ id, is_favorite }) => {
       await queryClient.cancelQueries({ queryKey: ['records'] })
-      const previousRecords = queryClient.getQueryData<RecordItem[]>(['records', selectedType, sortBy])
+      const previousRecords = queryClient.getQueryData<RecordItem[]>(['records', filterView, sortBy])
       if (previousRecords) {
         queryClient.setQueryData<RecordItem[]>(
-          ['records', selectedType, sortBy],
+          ['records', filterView, sortBy],
           previousRecords.map((r) => (r.id === id ? { ...r, is_favorite } : r))
         )
       }
@@ -120,7 +121,7 @@ export default function VaultPage() {
     },
     onError: (_err, _vars, context) => {
       if (context?.previousRecords) {
-        queryClient.setQueryData(['records', selectedType, sortBy], context.previousRecords)
+        queryClient.setQueryData(['records', filterView, sortBy], context.previousRecords)
       }
     },
     onSettled: () => {
@@ -128,12 +129,10 @@ export default function VaultPage() {
     },
   })
 
-  // Delete Record Mutation
+  // Delete Record Mutation with Storage Cleanup
   const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const supabase = createClient()
-      const { error } = await supabase.from('records').delete().eq('id', id)
-      if (error) throw error
+    mutationFn: async (record: RecordItem) => {
+      await deleteRecordWithAssets(record)
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['records'] })
@@ -141,7 +140,7 @@ export default function VaultPage() {
     },
   })
 
-  // Filter records by search (title / URL) AND tag filter
+  // Filter records by search (STRICTLY title only) AND tag filter
   const filteredRecords = records.filter((r) => {
     // 1. Tag filter
     if (selectedTag !== 'all') {
@@ -149,25 +148,15 @@ export default function VaultPage() {
       if (!hasTag) return false
     }
 
-    // 2. Search query filter (title & source url)
+    // 2. Search query filter (strictly title only)
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase()
       const matchTitle = r.title.toLowerCase().includes(q)
-      const matchUrl = r.source_url?.toLowerCase().includes(q)
-      if (!matchTitle && !matchUrl) return false
+      if (!matchTitle) return false
     }
 
     return true
   })
-
-  const filterTabs = [
-    { id: 'all', label: 'All Vault' },
-    { id: 'favorites', label: 'Starred' },
-    { id: 'note', label: 'Notes' },
-    { id: 'youtube', label: 'YouTube' },
-    { id: 'article', label: 'Articles' },
-    { id: 'book', label: 'Books' },
-  ]
 
   return (
     <AppShell>
@@ -176,7 +165,7 @@ export default function VaultPage() {
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-zinc-100">Knowledge Vault</h1>
-            <p className="text-xs text-zinc-400">Search and filter your retained notes, takeaways, and links</p>
+            <p className="text-xs text-zinc-400">Search by title and tag-filter your notes, insights, and videos</p>
           </div>
 
           <div className="flex items-center gap-2">
@@ -185,12 +174,12 @@ export default function VaultPage() {
               className="flex items-center gap-1.5 rounded-xl bg-amber-500 px-4 py-2 text-xs font-semibold text-zinc-950 transition-all hover:bg-amber-400 active:scale-95 shadow-sm"
             >
               <Plus className="h-4 w-4" />
-              New Rich Record
+              New Record
             </Link>
           </div>
         </div>
 
-        {/* Search & Sort Controls */}
+        {/* Search, View, and Sort Controls */}
         <div className="flex flex-col md:flex-row gap-3">
           <div className="relative flex-1">
             <Search className="absolute left-3.5 top-3 h-4 w-4 text-zinc-500" />
@@ -198,12 +187,37 @@ export default function VaultPage() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search by title or source URL..."
+              placeholder="Search by title..."
               className="w-full rounded-xl border border-zinc-800 bg-zinc-900/80 pl-10 pr-4 py-2.5 text-xs text-zinc-200 placeholder-zinc-500 focus:border-amber-500/50 focus:outline-none focus:ring-1 focus:ring-amber-500/50 transition-all"
             />
           </div>
 
           <div className="flex items-center gap-2">
+            {/* View Filter (All vs Starred) */}
+            <div className="flex rounded-xl border border-zinc-800 bg-zinc-900/80 p-1 text-xs">
+              <button
+                onClick={() => setFilterView('all')}
+                className={`rounded-lg px-3 py-1 font-medium transition-colors ${
+                  filterView === 'all'
+                    ? 'bg-amber-500/20 text-amber-400 font-semibold'
+                    : 'text-zinc-400 hover:text-zinc-200'
+                }`}
+              >
+                All
+              </button>
+              <button
+                onClick={() => setFilterView('favorites')}
+                className={`rounded-lg px-3 py-1 font-medium transition-colors ${
+                  filterView === 'favorites'
+                    ? 'bg-amber-500/20 text-amber-400 font-semibold'
+                    : 'text-zinc-400 hover:text-zinc-200'
+                }`}
+              >
+                Starred
+              </button>
+            </div>
+
+            {/* Sort Dropdown */}
             <div className="flex items-center gap-1.5 rounded-xl border border-zinc-800 bg-zinc-900/80 px-3 py-1.5 text-xs text-zinc-400">
               <Filter className="h-3.5 w-3.5 text-zinc-500" />
               <select
@@ -219,60 +233,48 @@ export default function VaultPage() {
           </div>
         </div>
 
-        {/* Type Filter Tabs */}
-        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
-          {filterTabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setSelectedType(tab.id)}
-              className={`rounded-lg px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-colors ${
-                selectedType === tab.id
-                  ? 'bg-amber-500/10 text-amber-400 ring-1 ring-amber-500/30 font-semibold'
-                  : 'bg-zinc-900/60 text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200 border border-zinc-800/80'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-
         {/* Dedicated Tag Filter Pill Bar */}
-        {allTags.length > 0 && (
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none border-y border-zinc-800/60 py-2.5">
-            <span className="text-[11px] font-semibold text-zinc-500 flex items-center gap-1 pl-1 shrink-0">
-              <Hash className="h-3 w-3" /> Tags:
-            </span>
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none border-y border-zinc-800/60 py-2.5">
+          <span className="text-[11px] font-semibold text-zinc-500 flex items-center gap-1 pl-1 shrink-0">
+            <Hash className="h-3 w-3" /> Tags:
+          </span>
 
-            <button
-              onClick={() => setSelectedTag('all')}
-              className={`rounded-lg px-2.5 py-1 text-[11px] font-medium whitespace-nowrap transition-colors ${
-                selectedTag === 'all'
-                  ? 'bg-zinc-200 text-zinc-950 font-bold'
-                  : 'bg-zinc-900 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200'
-              }`}
-            >
-              All Tags
-            </button>
+          <button
+            onClick={() => setSelectedTag('all')}
+            className={`rounded-lg px-2.5 py-1 text-[11px] font-medium whitespace-nowrap transition-colors ${
+              selectedTag === 'all'
+                ? 'bg-zinc-200 text-zinc-950 font-bold'
+                : 'bg-zinc-900 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200'
+            }`}
+          >
+            All Tags
+          </button>
 
-            {allTags.map((tag) => {
-              const isSelected = selectedTag === tag.id
-              return (
-                <button
-                  key={tag.id}
-                  onClick={() => setSelectedTag(isSelected ? 'all' : tag.id)}
-                  className={`flex items-center gap-1 rounded-lg px-2.5 py-1 text-[11px] font-medium whitespace-nowrap transition-colors ${
-                    isSelected
-                      ? 'bg-amber-500 text-zinc-950 font-bold shadow-sm'
-                      : 'bg-zinc-900 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 border border-zinc-800/80'
-                  }`}
-                >
-                  <span>#{tag.name}</span>
-                  {isSelected && <X className="h-3 w-3" />}
-                </button>
-              )
-            })}
-          </div>
-        )}
+          {allTags.map((tag) => {
+            const isSelected = selectedTag === tag.id
+            return (
+              <button
+                key={tag.id}
+                onClick={() => setSelectedTag(isSelected ? 'all' : tag.id)}
+                className={`flex items-center gap-1 rounded-lg px-2.5 py-1 text-[11px] font-medium whitespace-nowrap transition-colors ${
+                  isSelected
+                    ? 'bg-amber-500 text-zinc-950 font-bold shadow-sm'
+                    : 'bg-zinc-900 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 border border-zinc-800/80'
+                }`}
+              >
+                <span>#{tag.name}</span>
+                {isSelected && <X className="h-3 w-3" />}
+              </button>
+            )
+          })}
+
+          <Link
+            href="/settings"
+            className="flex items-center gap-1 rounded-lg border border-dashed border-zinc-700 px-2.5 py-1 text-[11px] font-medium text-zinc-400 hover:border-amber-500 hover:text-amber-400 whitespace-nowrap transition-colors"
+          >
+            <Plus className="h-3 w-3" /> Manage Tags
+          </Link>
+        </div>
 
         {/* Records Grid */}
         {isLoading ? (
@@ -299,11 +301,12 @@ export default function VaultPage() {
               return (
                 <div
                   key={record.id}
-                  className="group relative flex flex-col justify-between rounded-2xl border border-zinc-800/80 bg-zinc-900/50 hover:border-zinc-700/80 hover:bg-zinc-900/80 transition-all shadow-sm overflow-hidden"
+                  onClick={() => router.push(`/records/${record.id}`)}
+                  className="group relative flex flex-col justify-between rounded-2xl border border-zinc-800/80 bg-zinc-900/50 hover:border-zinc-700 hover:bg-zinc-900/90 transition-all shadow-sm overflow-hidden cursor-pointer active:scale-[0.99]"
                 >
                   {/* Optional Card Thumbnail Banner */}
                   {record.thumbnail_url && (
-                    <Link href={`/records/${record.id}`} className="relative h-40 w-full block overflow-hidden bg-zinc-950 border-b border-zinc-800/80">
+                    <div className="relative h-40 w-full block overflow-hidden bg-zinc-950 border-b border-zinc-800/80">
                       <Image
                         src={record.thumbnail_url}
                         alt={record.title}
@@ -312,25 +315,39 @@ export default function VaultPage() {
                         className="object-cover group-hover:scale-105 transition-transform duration-300"
                         loading="lazy"
                       />
-                    </Link>
+                    </div>
                   )}
 
                   <div className="p-5 flex-1 flex flex-col justify-between">
                     <div>
-                      {/* Top Row: Type Badge + Star */}
+                      {/* Top Row: Star & Delete */}
                       <div className="flex items-center justify-between gap-2 mb-2.5">
-                        <span className="inline-flex items-center rounded-md bg-zinc-800/80 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-zinc-400">
-                          {record.source_type}
-                        </span>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          {record.tags && record.tags.map((tag) => (
+                            <button
+                              key={tag.id}
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setSelectedTag(tag.id)
+                              }}
+                              className="rounded-md bg-zinc-800/60 px-2 py-0.5 text-[10px] font-medium text-zinc-400 hover:text-amber-400 transition-colors"
+                            >
+                              #{tag.name}
+                            </button>
+                          ))}
+                        </div>
 
                         <div className="flex items-center gap-1">
                           <button
-                            onClick={() =>
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation()
                               toggleFavoriteMutation.mutate({
                                 id: record.id,
                                 is_favorite: !record.is_favorite,
                               })
-                            }
+                            }}
                             className={`rounded-lg p-1.5 transition-colors ${
                               record.is_favorite
                                 ? 'text-amber-400 hover:text-amber-300'
@@ -342,9 +359,11 @@ export default function VaultPage() {
                           </button>
 
                           <button
-                            onClick={() => {
-                              if (confirm('Delete this record?')) {
-                                deleteMutation.mutate(record.id)
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              if (confirm('Delete this record and its uploaded images?')) {
+                                deleteMutation.mutate(record)
                               }
                             }}
                             className="opacity-0 group-hover:opacity-100 rounded-lg p-1.5 text-zinc-600 hover:text-red-400 transition-all"
@@ -356,11 +375,9 @@ export default function VaultPage() {
                       </div>
 
                       {/* Record Title */}
-                      <Link href={`/records/${record.id}`} className="block group-hover:text-amber-400 transition-colors">
-                        <h3 className="text-base font-semibold tracking-tight text-zinc-100 line-clamp-2">
-                          {record.title}
-                        </h3>
-                      </Link>
+                      <h3 className="text-base font-semibold tracking-tight text-zinc-100 group-hover:text-amber-400 transition-colors line-clamp-2">
+                        {record.title}
+                      </h3>
 
                       {/* Source URL */}
                       {record.source_url && (
@@ -368,26 +385,12 @@ export default function VaultPage() {
                           href={record.source_url}
                           target="_blank"
                           rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
                           className="mt-1.5 inline-flex items-center gap-1 text-[11px] text-zinc-500 hover:text-zinc-300 transition-colors truncate max-w-full"
                         >
                           <ExternalLink className="h-3 w-3 shrink-0" />
                           <span className="truncate">{record.source_url.replace(/^https?:\/\//, '')}</span>
                         </a>
-                      )}
-
-                      {/* Tags */}
-                      {record.tags && record.tags.length > 0 && (
-                        <div className="mt-3 flex flex-wrap gap-1.5">
-                          {record.tags.map((tag) => (
-                            <button
-                              key={tag.id}
-                              onClick={() => setSelectedTag(tag.id)}
-                              className="rounded-md bg-zinc-800/60 px-2 py-0.5 text-[10px] font-medium text-zinc-400 hover:text-amber-400 transition-colors"
-                            >
-                              #{tag.name}
-                            </button>
-                          ))}
-                        </div>
                       )}
                     </div>
 

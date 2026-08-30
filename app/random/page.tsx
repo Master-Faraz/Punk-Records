@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Image from 'next/image'
 import { AppShell } from '@/components/layout/app-shell'
 import { TiptapRenderer } from '@/components/editor/tiptap-renderer'
+import { YouTubeEmbed, getYouTubeVideoId } from '@/components/media/youtube-embed'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import type { RecordItem, Tag } from '@/types/database'
@@ -244,45 +245,46 @@ export default function RandomPage() {
             )}
 
             <div className="p-6 sm:p-8">
-              {/* Card Tags & Source Badge */}
+              {/* Card Tags */}
               <div className="flex items-center justify-between gap-2 mb-3">
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <span className="rounded-md bg-zinc-800 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-400">
-                  {currentRandomRecord.source_type}
-                </span>
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  {currentRandomRecord.tags && currentRandomRecord.tags.map((tag) => (
+                    <span key={tag.id} className="rounded-md bg-zinc-800/80 px-2 py-0.5 text-[10px] font-medium text-zinc-400">
+                      #{tag.name}
+                    </span>
+                  ))}
+                </div>
 
-                {currentRandomRecord.tags && currentRandomRecord.tags.map((tag) => (
-                  <span key={tag.id} className="rounded-md bg-zinc-800/80 px-2 py-0.5 text-[10px] font-medium text-zinc-400">
-                    #{tag.name}
-                  </span>
-                ))}
+                <span className="flex items-center gap-1 text-[11px] font-medium text-zinc-400">
+                  <Eye className="h-3.5 w-3.5 text-zinc-500" />
+                  {currentRandomRecord.read_count} reads
+                </span>
               </div>
 
-              <span className="flex items-center gap-1 text-[11px] font-medium text-zinc-400">
-                <Eye className="h-3.5 w-3.5 text-zinc-500" />
-                {currentRandomRecord.read_count} reads
-              </span>
-            </div>
-
-            {/* Title */}
-            <Link
-              href={`/records/${currentRandomRecord.id}`}
-              className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-50 hover:text-amber-400 transition-colors"
-            >
-              {currentRandomRecord.title}
-            </Link>
-
-            {currentRandomRecord.source_url && (
-              <a
-                href={currentRandomRecord.source_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-2 inline-flex items-center gap-1.5 text-xs text-amber-400/80 hover:text-amber-300 transition-colors truncate max-w-full"
+              {/* Title */}
+              <Link
+                href={`/records/${currentRandomRecord.id}`}
+                className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-50 hover:text-amber-400 transition-colors"
               >
-                <ExternalLink className="h-3 w-3 shrink-0" />
-                <span className="truncate">{currentRandomRecord.source_url}</span>
-              </a>
-            )}
+                {currentRandomRecord.title}
+              </Link>
+
+              {/* YouTube Embed if YouTube link */}
+              {currentRandomRecord.source_url && getYouTubeVideoId(currentRandomRecord.source_url) ? (
+                <div className="mt-4">
+                  <YouTubeEmbed url={currentRandomRecord.source_url} title={currentRandomRecord.title} />
+                </div>
+              ) : currentRandomRecord.source_url ? (
+                <a
+                  href={currentRandomRecord.source_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-2 inline-flex items-center gap-1.5 text-xs text-amber-400/80 hover:text-amber-300 transition-colors truncate max-w-full"
+                >
+                  <ExternalLink className="h-3 w-3 shrink-0" />
+                  <span className="truncate">{currentRandomRecord.source_url}</span>
+                </a>
+              ) : null}
 
             {/* Note Content */}
             <div className="mt-6 rounded-2xl border border-zinc-800/60 bg-zinc-950 p-5">

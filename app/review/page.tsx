@@ -4,6 +4,8 @@ import { useState } from 'react'
 import Image from 'next/image'
 import { AppShell } from '@/components/layout/app-shell'
 import { TiptapRenderer } from '@/components/editor/tiptap-renderer'
+import { YouTubeEmbed, getYouTubeVideoId } from '@/components/media/youtube-embed'
+import { getUserSettings, computeNextReview } from '@/lib/settings'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import type { RecordItem } from '@/types/database'
@@ -70,30 +72,11 @@ export default function ReviewPage() {
       const supabase = createClient()
       const currentStage = record.review_stage || 0
 
-      let nextStage = 1
-      let nextIntervalDays = 1
-
-      if (result === 'remembered') {
-        if (currentStage === 0 || currentStage === 1) {
-          nextStage = 2
-          nextIntervalDays = 7
-        } else if (currentStage === 2) {
-          nextStage = 3
-          nextIntervalDays = 30
-        } else {
-          nextStage = 3
-          nextIntervalDays = 30 // repeats at 30 days
-        }
-      } else {
-        // forgot -> resets to 1-day step
-        nextStage = 1
-        nextIntervalDays = 1
-      }
-
-      const nextReviewAt = new Date(Date.now() + nextIntervalDays * 24 * 60 * 60 * 1000).toISOString()
+      const settings = await getUserSettings()
+      const { nextStage, nextReviewAt } = computeNextReview(currentStage, result, settings)
       const nowIso = new Date().toISOString()
 
-      // Log review history
+      // 1. Record review in history
       await supabase.from('reviews').insert({
         record_id: record.id,
         user_id: record.user_id,
@@ -208,10 +191,6 @@ export default function ReviewPage() {
               {/* Card Tags & Stage */}
               <div className="flex items-center justify-between gap-2 mb-4">
                 <div className="flex items-center gap-1.5 flex-wrap">
-                  <span className="rounded-md bg-zinc-800 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-400">
-                    {currentRecord.source_type}
-                  </span>
-
                   {currentRecord.tags && currentRecord.tags.map((tag) => (
                     <span key={tag.id} className="rounded-md bg-zinc-800/80 px-2 py-0.5 text-[10px] font-medium text-zinc-400">
                       #{tag.name}
@@ -225,22 +204,27 @@ export default function ReviewPage() {
                 </span>
               </div>
 
-            {/* Card Prompt / Title */}
-            <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-50 leading-snug">
-              {currentRecord.title}
-            </h2>
+              {/* Card Prompt / Title */}
+              <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-50 leading-snug">
+                {currentRecord.title}
+              </h2>
 
-            {currentRecord.source_url && (
-              <a
-                href={currentRecord.source_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-2 inline-flex items-center gap-1.5 text-xs text-amber-400/80 hover:text-amber-300 transition-colors truncate max-w-full"
-              >
-                <ExternalLink className="h-3 w-3 shrink-0" />
-                <span className="truncate">{currentRecord.source_url}</span>
-              </a>
-            )}
+              {/* YouTube Embed if YouTube link */}
+              {currentRecord.source_url && getYouTubeVideoId(currentRecord.source_url) ? (
+                <div className="mt-4">
+                  <YouTubeEmbed url={currentRecord.source_url} title={currentRecord.title} />
+                </div>
+              ) : currentRecord.source_url ? (
+                <a
+                  href={currentRecord.source_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-2 inline-flex items-center gap-1.5 text-xs text-amber-400/80 hover:text-amber-300 transition-colors truncate max-w-full"
+                >
+                  <ExternalLink className="h-3 w-3 shrink-0" />
+                  <span className="truncate">{currentRecord.source_url}</span>
+                </a>
+              ) : null}
 
             {/* Expand / Reveal Toggle */}
             <div className="mt-6 border-t border-zinc-800/80 pt-4">

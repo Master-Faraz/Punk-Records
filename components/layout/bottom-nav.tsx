@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { BookOpen, Brain, Dices, Plus } from 'lucide-react'
+import { BookOpen, Brain, Dices, Plus, Settings } from 'lucide-react'
 
 interface BottomNavProps {
   dueCount?: number
@@ -17,7 +17,7 @@ export function BottomNav({ dueCount = 0, onQuickCapture }: BottomNavProps) {
       <div className="flex h-16 items-center justify-around px-2">
         <Link
           href="/"
-          className={`flex flex-col items-center justify-center gap-1 w-16 py-1 text-[11px] font-medium transition-colors ${
+          className={`flex flex-col items-center justify-center gap-1 w-14 py-1 text-[10px] font-medium transition-colors ${
             pathname === '/' ? 'text-amber-400 font-semibold' : 'text-zinc-400'
           }`}
         >
@@ -27,14 +27,14 @@ export function BottomNav({ dueCount = 0, onQuickCapture }: BottomNavProps) {
 
         <Link
           href="/review"
-          className={`relative flex flex-col items-center justify-center gap-1 w-16 py-1 text-[11px] font-medium transition-colors ${
+          className={`relative flex flex-col items-center justify-center gap-1 w-14 py-1 text-[10px] font-medium transition-colors ${
             pathname === '/review' ? 'text-amber-400 font-semibold' : 'text-zinc-400'
           }`}
         >
           <Brain className="h-5 w-5" />
           <span>Review</span>
           {dueCount > 0 && (
-            <span className="absolute top-0.5 right-3 flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-500 px-1 text-[9px] font-bold text-zinc-950">
+            <span className="absolute top-0.5 right-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-500 px-1 text-[9px] font-bold text-zinc-950">
               {dueCount}
             </span>
           )}
@@ -43,20 +43,30 @@ export function BottomNav({ dueCount = 0, onQuickCapture }: BottomNavProps) {
         {/* Center Quick Capture FAB */}
         <button
           onClick={onQuickCapture}
-          className="flex h-11 w-11 items-center justify-center rounded-full bg-amber-500 text-zinc-950 shadow-lg shadow-amber-500/20 active:scale-95 transition-transform"
+          className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-500 text-zinc-950 shadow-lg shadow-amber-500/20 active:scale-95 transition-transform"
           aria-label="Quick Capture"
         >
-          <Plus className="h-6 w-6 stroke-[2.5]" />
+          <Plus className="h-5 w-5 stroke-[2.5]" />
         </button>
 
         <Link
           href="/random"
-          className={`flex flex-col items-center justify-center gap-1 w-16 py-1 text-[11px] font-medium transition-colors ${
+          className={`flex flex-col items-center justify-center gap-1 w-14 py-1 text-[10px] font-medium transition-colors ${
             pathname === '/random' ? 'text-amber-400 font-semibold' : 'text-zinc-400'
           }`}
         >
           <Dices className="h-5 w-5" />
           <span>Random</span>
+        </Link>
+
+        <Link
+          href="/settings"
+          className={`flex flex-col items-center justify-center gap-1 w-14 py-1 text-[10px] font-medium transition-colors ${
+            pathname === '/settings' ? 'text-amber-400 font-semibold' : 'text-zinc-400'
+          }`}
+        >
+          <Settings className="h-5 w-5" />
+          <span>Settings</span>
         </Link>
       </div>
     </nav>
