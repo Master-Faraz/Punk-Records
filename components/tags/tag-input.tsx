@@ -88,14 +88,14 @@ export function TagInput({ selectedTags, onChange }: TagInputProps) {
       {/* Selected Tags & Search Input Field */}
       <div
         onClick={() => setIsOpen(true)}
-        className="flex flex-wrap items-center gap-1.5 rounded-xl border border-zinc-800 bg-zinc-950 p-2 min-h-[42px] focus-within:border-amber-500/50 focus-within:ring-1 focus-within:ring-amber-500/50 cursor-text transition-all"
+        className="flex flex-wrap items-center gap-1.5 rounded-xl border border-zinc-800 bg-zinc-950 p-2 min-h-[42px] focus-within:border-zinc-500 focus-within:ring-1 focus-within:ring-zinc-500 cursor-text transition-all"
       >
         {selectedTags.map((tag) => (
           <span
             key={tag}
-            className="inline-flex items-center gap-1 rounded-lg bg-amber-500/15 px-2.5 py-1 text-xs font-semibold text-amber-400 ring-1 ring-amber-500/30 animate-in fade-in zoom-in-95 duration-100"
+            className="inline-flex items-center gap-1 rounded-lg bg-zinc-800 px-2.5 py-1 text-xs font-semibold text-zinc-100 ring-1 ring-zinc-700 animate-in fade-in zoom-in-95 duration-100"
           >
-            <Hash className="h-3 w-3" />
+            <Hash className="h-3 w-3 text-zinc-400" />
             {tag}
             <button
               type="button"
@@ -103,7 +103,7 @@ export function TagInput({ selectedTags, onChange }: TagInputProps) {
                 e.stopPropagation()
                 handleRemoveTag(tag)
               }}
-              className="rounded-full hover:bg-amber-500/30 p-0.5 transition-colors text-amber-300"
+              className="rounded-full hover:bg-zinc-700 p-0.5 transition-colors text-zinc-400 hover:text-zinc-200"
             >
               <X className="h-3 w-3" />
             </button>
@@ -157,7 +157,7 @@ export function TagInput({ selectedTags, onChange }: TagInputProps) {
       {isOpen && (
         <div className="absolute left-0 right-0 top-full z-40 mt-1 max-h-56 overflow-y-auto rounded-xl border border-zinc-800 bg-zinc-900/95 p-2 shadow-2xl backdrop-blur-md animate-in fade-in duration-100">
           {/* Header */}
-          <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-500 border-b border-zinc-800/80 mb-1 flex items-center justify-between">
+          <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-500 border-b border-zinc-800/80 mb-1 flex items-center justify-between font-mono">
             <span>Select Existing Tags</span>
             <span>{allTags.length} available</span>
           </div>
@@ -167,7 +167,7 @@ export function TagInput({ selectedTags, onChange }: TagInputProps) {
             <button
               type="button"
               onClick={() => handleAddTag(inputVal)}
-              className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs text-amber-400 hover:bg-amber-500/10 font-semibold transition-colors mb-1"
+              className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs text-zinc-100 hover:bg-zinc-800 font-semibold transition-colors mb-1"
             >
               <Plus className="h-3.5 w-3.5" />
               Create new tag &quot;#{inputVal.trim().toLowerCase().replace(/\s+/g, '-')}&quot;
@@ -186,7 +186,7 @@ export function TagInput({ selectedTags, onChange }: TagInputProps) {
                     onClick={() => handleToggleTag(tag.name)}
                     className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition-all active:scale-95 ${
                       isSelected
-                        ? 'bg-amber-500 text-zinc-950 font-bold shadow-sm'
+                        ? 'bg-white text-zinc-950 font-bold shadow-sm'
                         : 'bg-zinc-800/80 text-zinc-300 hover:bg-zinc-700 hover:text-zinc-100'
                     }`}
                   >
@@ -209,7 +209,7 @@ export function TagInput({ selectedTags, onChange }: TagInputProps) {
       {/* Quick Pick Tag Pills below the input (if unselected tags exist) */}
       {unselectedAvailableTags.length > 0 && !isOpen && (
         <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
-          <span className="text-[11px] text-zinc-500 flex items-center gap-1">
+          <span className="text-[11px] text-zinc-500 flex items-center gap-1 font-mono">
             <Plus className="h-3 w-3" /> Quick add:
           </span>
           {unselectedAvailableTags.slice(0, 8).map((tag) => (
@@ -217,7 +217,7 @@ export function TagInput({ selectedTags, onChange }: TagInputProps) {
               key={tag.id}
               type="button"
               onClick={() => handleAddTag(tag.name)}
-              className="inline-flex items-center gap-1 rounded-md border border-zinc-800/80 bg-zinc-900/60 px-2 py-0.5 text-[11px] font-medium text-zinc-400 hover:border-amber-500/50 hover:bg-amber-500/10 hover:text-amber-400 transition-colors"
+              className="inline-flex items-center gap-1 rounded-md border border-zinc-800/80 bg-zinc-900/60 px-2 py-0.5 text-[11px] font-medium text-zinc-400 hover:border-zinc-600 hover:bg-zinc-800 hover:text-zinc-100 transition-colors"
             >
               #{tag.name}
             </button>

@@ -2,17 +2,15 @@
 
 /*
  * =========================================================
- * GLOBAL DESIGN SYSTEM (PORTFOLIO THEME)
+ * GLOBAL DESIGN SYSTEM (MONOCHROME PORTFOLIO THEME)
  * =========================================================
  *
- * Premium monochrome & obsidian dark palette with a restrained
- * teal / cyber accent, editorial typography, and refined character spacing.
+ * Premium pure monochrome & obsidian palette.
+ * Strictly 3 core colors:
  *
- * Core:
- * Near Black   → #08090A
- * Soft White   → #F2F2F0
- * Graphite     → #24272A
- * Accent       → #3FA9A0
+ * Near Black   → #08090A (Surfaces, canvas, backgrounds)
+ * Soft White   → #F2F2F0 (Text, headers, active states, high-contrast actions)
+ * Graphite     → #24272A (Borders, dividers, subtle outlines)
  */
 
 @theme {
@@ -43,16 +41,9 @@
   --color-border-dark: #24272a;
   --color-border-light: #d2d4d2;
 
-  /* Accent - Portfolio Teal */
-  --color-accent: #3fa9a0;
-  --color-accent-hover: #48b8ae;
-  --color-teal: #3fa9a0;
-  --color-teal-hover: #48b8ae;
-
-  /* Map Amber tokens to Teal accent so all existing UI highlights align cleanly */
-  --color-amber-400: #48b8ae;
-  --color-amber-500: #3fa9a0;
-  --color-amber-600: #338880;
+  /* Pure Monochrome Neutral Highlight Tokens */
+  --color-accent: #f2f2f0;
+  --color-accent-hover: #ffffff;
 
   /* Map Zinc tokens to Portfolio obsidian surfaces */
   --color-zinc-950: #08090a;
@@ -151,7 +142,7 @@
 
 /*
  * =========================================================
- * DUAL-TONE & ACCENT UTILITIES
+ * DUAL-TONE & MONOCHROME UTILITIES
  * =========================================================
  */
 
@@ -237,8 +228,8 @@ button, input, textarea, select {
 
 /* Selection */
 ::selection {
-  background-color: rgba(63, 169, 160, 0.25);
-  color: #48b8ae;
+  background-color: rgba(242, 242, 240, 0.2);
+  color: #ffffff;
 }
 
 /* Scrollbar */
@@ -326,14 +317,14 @@ button, input, textarea, select {
 }
 
 .tiptap-content blockquote {
-  border-left: 3px solid #3fa9a0;
+  border-left: 3px solid #f2f2f0;
   padding-left: 1rem;
   margin-left: 0;
   margin-top: 0.8em;
   margin-bottom: 0.8em;
   font-style: italic;
   color: #a7abad;
-  background: rgba(63, 169, 160, 0.04);
+  background: rgba(255, 255, 255, 0.03);
   padding-top: 0.25rem;
   padding-bottom: 0.25rem;
   border-radius: 0 0.5rem 0.5rem 0;
@@ -350,7 +341,7 @@ button, input, textarea, select {
   overflow-x: auto;
   margin-top: 0.8em;
   margin-bottom: 0.8em;
-  color: #48b8ae;
+  color: #f2f2f0;
   letter-spacing: 0.02em;
 }
 
@@ -361,7 +352,7 @@ button, input, textarea, select {
   padding: 0.15rem 0.35rem;
   font-family: var(--font-martian, monospace);
   font-size: 0.85em;
-  color: #3fa9a0;
+  color: #f2f2f0;
   letter-spacing: 0.02em;
 }
 
@@ -380,8 +371,8 @@ button, input, textarea, select {
 }
 
 .tiptap-content mark {
-  background-color: rgba(63, 169, 160, 0.25);
-  color: #48b8ae;
+  background-color: rgba(242, 242, 240, 0.2);
+  color: #ffffff;
   padding: 0.1rem 0.3rem;
   border-radius: 0.25rem;
 }
@@ -406,7 +397,7 @@ button, input, textarea, select {
 }
 
 .tiptap-content ul[data-type="taskList"] li > label input[type="checkbox"] {
-  accent-color: #3fa9a0;
+  accent-color: #f2f2f0;
   cursor: pointer;
   height: 1rem;
   width: 1rem;

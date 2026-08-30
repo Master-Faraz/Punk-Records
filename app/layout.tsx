@@ -53,7 +53,7 @@ export default function RootLayout({
       data-scroll-behavior="smooth"
       className={`${neueHaas.variable} ${ppEditorial.variable} ${martianMono.variable} ${familjenGrotesk.variable} h-full antialiased dark scroll-smooth`}
     >
-      <body className="min-h-full flex flex-col bg-[#08090a] text-[#f2f2f0] font-sans selection:bg-teal-500/20 selection:text-teal-400">
+      <body className="min-h-full flex flex-col bg-[#08090a] text-[#f2f2f0] font-sans selection:bg-zinc-800 selection:text-white">
         <QueryProvider>{children}</QueryProvider>
         <ServiceWorkerRegister />
       </body>

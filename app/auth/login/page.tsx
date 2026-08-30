@@ -38,7 +38,7 @@ export default function LoginPage() {
   return (
     <div className="w-full rounded-2xl border border-zinc-800/80 bg-zinc-900/60 p-8 shadow-2xl backdrop-blur-xl">
       <div className="mb-8 flex flex-col items-center text-center">
-        <div className="mb-3 flex h-16 w-16 items-center justify-center rounded-2xl overflow-hidden bg-zinc-900 shadow-xl shadow-red-950/30 ring-1 ring-amber-500/30">
+        <div className="mb-3 flex h-16 w-16 items-center justify-center rounded-2xl overflow-hidden bg-zinc-900 shadow-xl ring-1 ring-zinc-800">
           <Image
             src="/images/punk-records-logo.png"
             alt="Punk Records Logo"
@@ -70,7 +70,7 @@ export default function LoginPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="you@example.com"
-            className="w-full rounded-lg border border-zinc-800 bg-zinc-950 px-3.5 py-2.5 text-sm text-zinc-100 placeholder-zinc-500 focus:border-amber-500/50 focus:outline-none focus:ring-1 focus:ring-amber-500/50 transition-colors"
+            className="w-full rounded-lg border border-zinc-800 bg-zinc-950 px-3.5 py-2.5 text-sm text-zinc-100 placeholder-zinc-500 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500 transition-colors"
           />
         </div>
 
@@ -85,17 +85,17 @@ export default function LoginPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="••••••••"
-            className="w-full rounded-lg border border-zinc-800 bg-zinc-950 px-3.5 py-2.5 text-sm text-zinc-100 placeholder-zinc-500 focus:border-amber-500/50 focus:outline-none focus:ring-1 focus:ring-amber-500/50 transition-colors"
+            className="w-full rounded-lg border border-zinc-800 bg-zinc-950 px-3.5 py-2.5 text-sm text-zinc-100 placeholder-zinc-500 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500 transition-colors"
           />
         </div>
 
         <button
           type="submit"
           disabled={isLoading}
-          className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-amber-500 px-4 py-2.5 text-sm font-semibold text-zinc-950 transition-all hover:bg-amber-400 active:scale-[0.98] disabled:opacity-50"
+          className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-white px-4 py-2.5 text-sm font-bold text-zinc-950 transition-all hover:bg-zinc-200 active:scale-[0.98] disabled:opacity-50 shadow-sm"
         >
           {isLoading ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
+            <Loader2 className="h-4 w-4 animate-spin text-zinc-950" />
           ) : (
             <>
               Sign In
@@ -107,7 +107,7 @@ export default function LoginPage() {
 
       <div className="mt-6 text-center text-xs text-zinc-500">
         Don&apos;t have an account?{' '}
-        <Link href="/auth/signup" className="font-medium text-amber-400 hover:text-amber-300 underline underline-offset-4">
+        <Link href="/auth/signup" className="font-medium text-zinc-300 hover:text-white underline underline-offset-4">
           Create one
         </Link>
       </div>

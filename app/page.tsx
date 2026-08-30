@@ -171,9 +171,9 @@ export default function VaultPage() {
           <div className="flex items-center gap-2">
             <Link
               href="/editor/new"
-              className="flex items-center gap-1.5 rounded-xl bg-amber-500 px-4 py-2 text-xs font-semibold text-zinc-950 transition-all hover:bg-amber-400 active:scale-95 shadow-sm"
+              className="flex items-center gap-1.5 rounded-xl bg-white px-4 py-2 text-xs font-bold text-zinc-950 transition-all hover:bg-zinc-200 active:scale-95 shadow-sm"
             >
-              <Plus className="h-4 w-4" />
+              <Plus className="h-4 w-4 stroke-[2.5]" />
               New Record
             </Link>
           </div>
@@ -188,7 +188,7 @@ export default function VaultPage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search by title..."
-              className="w-full rounded-xl border border-zinc-800 bg-zinc-900/80 pl-10 pr-4 py-2.5 text-xs text-zinc-200 placeholder-zinc-500 focus:border-amber-500/50 focus:outline-none focus:ring-1 focus:ring-amber-500/50 transition-all"
+              className="w-full rounded-xl border border-zinc-800 bg-zinc-900/80 pl-10 pr-4 py-2.5 text-xs text-zinc-200 placeholder-zinc-500 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500 transition-all"
             />
           </div>
 
@@ -199,7 +199,7 @@ export default function VaultPage() {
                 onClick={() => setFilterView('all')}
                 className={`rounded-lg px-3 py-1 font-medium transition-colors ${
                   filterView === 'all'
-                    ? 'bg-amber-500/20 text-amber-400 font-semibold'
+                    ? 'bg-zinc-800 text-zinc-100 font-semibold shadow-inner'
                     : 'text-zinc-400 hover:text-zinc-200'
                 }`}
               >
@@ -209,7 +209,7 @@ export default function VaultPage() {
                 onClick={() => setFilterView('favorites')}
                 className={`rounded-lg px-3 py-1 font-medium transition-colors ${
                   filterView === 'favorites'
-                    ? 'bg-amber-500/20 text-amber-400 font-semibold'
+                    ? 'bg-white text-zinc-950 font-bold shadow-sm'
                     : 'text-zinc-400 hover:text-zinc-200'
                 }`}
               >
@@ -235,7 +235,7 @@ export default function VaultPage() {
 
         {/* Dedicated Tag Filter Pill Bar */}
         <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none border-y border-zinc-800/60 py-2.5">
-          <span className="text-[11px] font-semibold text-zinc-500 flex items-center gap-1 pl-1 shrink-0">
+          <span className="text-[11px] font-semibold text-zinc-500 flex items-center gap-1 pl-1 shrink-0 font-mono">
             <Hash className="h-3 w-3" /> Tags:
           </span>
 
@@ -243,7 +243,7 @@ export default function VaultPage() {
             onClick={() => setSelectedTag('all')}
             className={`rounded-lg px-2.5 py-1 text-[11px] font-medium whitespace-nowrap transition-colors ${
               selectedTag === 'all'
-                ? 'bg-zinc-200 text-zinc-950 font-bold'
+                ? 'bg-white text-zinc-950 font-bold'
                 : 'bg-zinc-900 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200'
             }`}
           >
@@ -258,8 +258,8 @@ export default function VaultPage() {
                 onClick={() => setSelectedTag(isSelected ? 'all' : tag.id)}
                 className={`flex items-center gap-1 rounded-lg px-2.5 py-1 text-[11px] font-medium whitespace-nowrap transition-colors ${
                   isSelected
-                    ? 'bg-amber-500 text-zinc-950 font-bold shadow-sm'
-                    : 'bg-zinc-900 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 border border-zinc-800/80'
+                    ? 'bg-white text-zinc-950 font-bold shadow-sm'
+                    : 'bg-zinc-900 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100 border border-zinc-800/80'
                 }`}
               >
                 <span>#{tag.name}</span>
@@ -270,7 +270,7 @@ export default function VaultPage() {
 
           <Link
             href="/settings"
-            className="flex items-center gap-1 rounded-lg border border-dashed border-zinc-700 px-2.5 py-1 text-[11px] font-medium text-zinc-400 hover:border-amber-500 hover:text-amber-400 whitespace-nowrap transition-colors"
+            className="flex items-center gap-1 rounded-lg border border-dashed border-zinc-700 px-2.5 py-1 text-[11px] font-medium text-zinc-400 hover:border-zinc-500 hover:text-zinc-200 whitespace-nowrap transition-colors"
           >
             <Plus className="h-3 w-3" /> Manage Tags
           </Link>
@@ -279,7 +279,7 @@ export default function VaultPage() {
         {/* Records Grid */}
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-24 text-zinc-500">
-            <Loader2 className="h-6 w-6 animate-spin text-amber-500" />
+            <Loader2 className="h-6 w-6 animate-spin text-zinc-400" />
             <span className="mt-2 text-xs">Loading vault...</span>
           </div>
         ) : filteredRecords.length === 0 ? (
@@ -332,7 +332,7 @@ export default function VaultPage() {
                                 e.stopPropagation()
                                 setSelectedTag(tag.id)
                               }}
-                              className="rounded-md bg-zinc-800/60 px-2 py-0.5 text-[10px] font-medium text-zinc-400 hover:text-amber-400 transition-colors"
+                              className="rounded-md bg-zinc-800/60 px-2 py-0.5 text-[10px] font-medium text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 transition-colors"
                             >
                               #{tag.name}
                             </button>
@@ -351,12 +351,12 @@ export default function VaultPage() {
                             }}
                             className={`rounded-lg p-1.5 transition-colors ${
                               record.is_favorite
-                                ? 'text-amber-400 hover:text-amber-300'
+                                ? 'text-white hover:text-zinc-200'
                                 : 'text-zinc-600 hover:text-zinc-400'
                             }`}
                             title="Toggle Star"
                           >
-                            <Star className={`h-4 w-4 ${record.is_favorite ? 'fill-amber-400' : ''}`} />
+                            <Star className={`h-4 w-4 ${record.is_favorite ? 'fill-white text-white' : ''}`} />
                           </button>
 
                           <button
@@ -376,7 +376,7 @@ export default function VaultPage() {
                       </div>
 
                       {/* Record Title */}
-                      <h3 className="text-base font-semibold tracking-tight text-zinc-100 group-hover:text-amber-400 transition-colors line-clamp-2">
+                      <h3 className="text-base font-semibold tracking-tight text-zinc-100 group-hover:text-white transition-colors line-clamp-2">
                         {record.title}
                       </h3>
 
@@ -410,11 +410,11 @@ export default function VaultPage() {
 
                       <div>
                         {isDue ? (
-                          <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-400 ring-1 ring-amber-500/20">
+                          <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-bold text-zinc-950 font-mono shadow-sm">
                             Due for Review
                           </span>
                         ) : (
-                          <span className="flex items-center gap-1">
+                          <span className="flex items-center gap-1 font-mono text-[10px]">
                             <Calendar className="h-3 w-3" />
                             {new Date(record.next_review_at).toLocaleDateString(undefined, {
                               month: 'short',

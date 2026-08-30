@@ -59,7 +59,7 @@ export function TiptapRenderer({ content }: TiptapRendererProps) {
       LinkExtension.configure({
         openOnClick: true,
         HTMLAttributes: {
-          class: 'text-amber-400 underline underline-offset-2 hover:text-amber-300',
+          class: 'text-zinc-100 underline underline-offset-4 hover:text-white font-medium',
           target: '_blank',
           rel: 'noopener noreferrer',
         },

@@ -76,7 +76,7 @@ export function TiptapEditor({
       LinkExtension.configure({
         openOnClick: false,
         HTMLAttributes: {
-          class: 'text-amber-400 underline underline-offset-2 hover:text-amber-300',
+          class: 'text-zinc-100 underline underline-offset-4 hover:text-white font-medium',
         },
       }),
       Youtube.configure({
@@ -154,7 +154,7 @@ export function TiptapEditor({
           type="button"
           onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
           className={`rounded-lg p-1.5 hover:bg-zinc-800 hover:text-zinc-200 transition-colors ${
-            editor.isActive('heading', { level: 1 }) ? 'bg-zinc-800 text-amber-400 font-bold' : ''
+            editor.isActive('heading', { level: 1 }) ? 'bg-zinc-800 text-zinc-100 font-bold' : ''
           }`}
           title="Heading 1"
         >
@@ -165,7 +165,7 @@ export function TiptapEditor({
           type="button"
           onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
           className={`rounded-lg p-1.5 hover:bg-zinc-800 hover:text-zinc-200 transition-colors ${
-            editor.isActive('heading', { level: 2 }) ? 'bg-zinc-800 text-amber-400 font-bold' : ''
+            editor.isActive('heading', { level: 2 }) ? 'bg-zinc-800 text-zinc-100 font-bold' : ''
           }`}
           title="Heading 2"
         >
@@ -176,7 +176,7 @@ export function TiptapEditor({
           type="button"
           onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
           className={`rounded-lg p-1.5 hover:bg-zinc-800 hover:text-zinc-200 transition-colors ${
-            editor.isActive('heading', { level: 3 }) ? 'bg-zinc-800 text-amber-400 font-bold' : ''
+            editor.isActive('heading', { level: 3 }) ? 'bg-zinc-800 text-zinc-100 font-bold' : ''
           }`}
           title="Heading 3"
         >
@@ -190,7 +190,7 @@ export function TiptapEditor({
           type="button"
           onClick={() => editor.chain().focus().toggleBold().run()}
           className={`rounded-lg p-1.5 hover:bg-zinc-800 hover:text-zinc-200 transition-colors ${
-            editor.isActive('bold') ? 'bg-zinc-800 text-amber-400 font-bold' : ''
+            editor.isActive('bold') ? 'bg-zinc-800 text-zinc-100 font-bold' : ''
           }`}
           title="Bold (Cmd+B)"
         >
@@ -201,7 +201,7 @@ export function TiptapEditor({
           type="button"
           onClick={() => editor.chain().focus().toggleItalic().run()}
           className={`rounded-lg p-1.5 hover:bg-zinc-800 hover:text-zinc-200 transition-colors ${
-            editor.isActive('italic') ? 'bg-zinc-800 text-amber-400' : ''
+            editor.isActive('italic') ? 'bg-zinc-800 text-zinc-100 font-bold' : ''
           }`}
           title="Italic (Cmd+I)"
         >
@@ -212,7 +212,7 @@ export function TiptapEditor({
           type="button"
           onClick={() => editor.chain().focus().toggleUnderline().run()}
           className={`rounded-lg p-1.5 hover:bg-zinc-800 hover:text-zinc-200 transition-colors ${
-            editor.isActive('underline') ? 'bg-zinc-800 text-amber-400' : ''
+            editor.isActive('underline') ? 'bg-zinc-800 text-zinc-100 font-bold' : ''
           }`}
           title="Underline (Cmd+U)"
         >
@@ -223,7 +223,7 @@ export function TiptapEditor({
           type="button"
           onClick={() => editor.chain().focus().toggleStrike().run()}
           className={`rounded-lg p-1.5 hover:bg-zinc-800 hover:text-zinc-200 transition-colors ${
-            editor.isActive('strike') ? 'bg-zinc-800 text-amber-400' : ''
+            editor.isActive('strike') ? 'bg-zinc-800 text-zinc-100 font-bold' : ''
           }`}
           title="Strikethrough"
         >
@@ -234,7 +234,7 @@ export function TiptapEditor({
           type="button"
           onClick={() => editor.chain().focus().toggleHighlight().run()}
           className={`rounded-lg p-1.5 hover:bg-zinc-800 hover:text-zinc-200 transition-colors ${
-            editor.isActive('highlight') ? 'bg-zinc-800 text-amber-400' : ''
+            editor.isActive('highlight') ? 'bg-zinc-800 text-zinc-100 font-bold' : ''
           }`}
           title="Highlight text"
         >
@@ -245,7 +245,7 @@ export function TiptapEditor({
           type="button"
           onClick={() => editor.chain().focus().toggleCode().run()}
           className={`rounded-lg p-1.5 hover:bg-zinc-800 hover:text-zinc-200 transition-colors ${
-            editor.isActive('code') ? 'bg-zinc-800 text-amber-400' : ''
+            editor.isActive('code') ? 'bg-zinc-800 text-zinc-100 font-bold' : ''
           }`}
           title="Inline Code"
         >
@@ -259,7 +259,7 @@ export function TiptapEditor({
           type="button"
           onClick={() => editor.chain().focus().toggleBulletList().run()}
           className={`rounded-lg p-1.5 hover:bg-zinc-800 hover:text-zinc-200 transition-colors ${
-            editor.isActive('bulletList') ? 'bg-zinc-800 text-amber-400' : ''
+            editor.isActive('bulletList') ? 'bg-zinc-800 text-zinc-100 font-bold' : ''
           }`}
           title="Bullet List"
         >
@@ -270,7 +270,7 @@ export function TiptapEditor({
           type="button"
           onClick={() => editor.chain().focus().toggleOrderedList().run()}
           className={`rounded-lg p-1.5 hover:bg-zinc-800 hover:text-zinc-200 transition-colors ${
-            editor.isActive('orderedList') ? 'bg-zinc-800 text-amber-400' : ''
+            editor.isActive('orderedList') ? 'bg-zinc-800 text-zinc-100 font-bold' : ''
           }`}
           title="Numbered List"
         >
@@ -281,7 +281,7 @@ export function TiptapEditor({
           type="button"
           onClick={() => editor.chain().focus().toggleTaskList().run()}
           className={`rounded-lg p-1.5 hover:bg-zinc-800 hover:text-zinc-200 transition-colors ${
-            editor.isActive('taskList') ? 'bg-zinc-800 text-amber-400' : ''
+            editor.isActive('taskList') ? 'bg-zinc-800 text-zinc-100 font-bold' : ''
           }`}
           title="Checklist / Task List"
         >
@@ -292,7 +292,7 @@ export function TiptapEditor({
           type="button"
           onClick={() => editor.chain().focus().toggleBlockquote().run()}
           className={`rounded-lg p-1.5 hover:bg-zinc-800 hover:text-zinc-200 transition-colors ${
-            editor.isActive('blockquote') ? 'bg-zinc-800 text-amber-400' : ''
+            editor.isActive('blockquote') ? 'bg-zinc-800 text-zinc-100 font-bold' : ''
           }`}
           title="Quote"
         >
@@ -303,7 +303,7 @@ export function TiptapEditor({
           type="button"
           onClick={() => editor.chain().focus().toggleCodeBlock().run()}
           className={`rounded-lg p-1.5 hover:bg-zinc-800 hover:text-zinc-200 transition-colors ${
-            editor.isActive('codeBlock') ? 'bg-zinc-800 text-amber-400' : ''
+            editor.isActive('codeBlock') ? 'bg-zinc-800 text-zinc-100 font-bold' : ''
           }`}
           title="Code Block"
         >
@@ -325,7 +325,7 @@ export function TiptapEditor({
         <button
           type="button"
           onClick={() => editor.chain().focus().setColumns().run()}
-          className="rounded-lg p-1.5 hover:bg-zinc-800 hover:text-amber-400 text-zinc-400 transition-colors"
+          className="rounded-lg p-1.5 hover:bg-zinc-800 hover:text-zinc-100 text-zinc-400 transition-colors"
           title="Insert 2 Columns (Side by Side Image & Text)"
         >
           <Columns2 className="h-4 w-4" />
@@ -338,7 +338,7 @@ export function TiptapEditor({
           type="button"
           onClick={() => editor.chain().focus().setTextAlign('left').run()}
           className={`rounded-lg p-1.5 hover:bg-zinc-800 hover:text-zinc-200 transition-colors ${
-            editor.isActive({ textAlign: 'left' }) ? 'bg-zinc-800 text-amber-400' : ''
+            editor.isActive({ textAlign: 'left' }) ? 'bg-zinc-800 text-zinc-100 font-bold' : ''
           }`}
           title="Align Left"
         >
@@ -349,7 +349,7 @@ export function TiptapEditor({
           type="button"
           onClick={() => editor.chain().focus().setTextAlign('center').run()}
           className={`rounded-lg p-1.5 hover:bg-zinc-800 hover:text-zinc-200 transition-colors ${
-            editor.isActive({ textAlign: 'center' }) ? 'bg-zinc-800 text-amber-400' : ''
+            editor.isActive({ textAlign: 'center' }) ? 'bg-zinc-800 text-zinc-100 font-bold' : ''
           }`}
           title="Align Center"
         >
@@ -360,7 +360,7 @@ export function TiptapEditor({
           type="button"
           onClick={() => editor.chain().focus().setTextAlign('right').run()}
           className={`rounded-lg p-1.5 hover:bg-zinc-800 hover:text-zinc-200 transition-colors ${
-            editor.isActive({ textAlign: 'right' }) ? 'bg-zinc-800 text-amber-400' : ''
+            editor.isActive({ textAlign: 'right' }) ? 'bg-zinc-800 text-zinc-100 font-bold' : ''
           }`}
           title="Align Right"
         >
@@ -374,7 +374,7 @@ export function TiptapEditor({
           type="button"
           onClick={setLink}
           className={`rounded-lg p-1.5 hover:bg-zinc-800 hover:text-zinc-200 transition-colors ${
-            editor.isActive('link') ? 'bg-zinc-800 text-amber-400' : ''
+            editor.isActive('link') ? 'bg-zinc-800 text-zinc-100 font-bold' : ''
           }`}
           title="Insert Link"
         >
@@ -395,7 +395,7 @@ export function TiptapEditor({
           type="button"
           onClick={() => fileInputRef.current?.click()}
           disabled={isUploading}
-          className="flex items-center gap-1 rounded-lg p-1.5 hover:bg-zinc-800 hover:text-zinc-200 transition-colors text-amber-400"
+          className="flex items-center gap-1 rounded-lg p-1.5 hover:bg-zinc-800 hover:text-zinc-200 transition-colors text-zinc-400 hover:text-white"
           title="Insert Image (Click image inside editor to resize & align)"
         >
           {isUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImageIcon className="h-4 w-4" />}

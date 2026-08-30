@@ -154,7 +154,7 @@ export default function RandomPage() {
         {/* Top Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500/10 text-amber-400 ring-1 ring-amber-500/20">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-zinc-900 text-zinc-100 ring-1 ring-zinc-800 shadow-sm">
               <Dices className="h-5 w-5" />
             </div>
             <div>
@@ -167,7 +167,7 @@ export default function RandomPage() {
             type="button"
             onClick={fetchRandomRecord}
             disabled={isShuffling}
-            className="flex items-center justify-center gap-2 rounded-xl bg-amber-500 px-5 py-2.5 text-xs font-semibold text-zinc-950 transition-all hover:bg-amber-400 active:scale-95 disabled:opacity-50 shadow-md shadow-amber-500/10"
+            className="flex items-center justify-center gap-2 rounded-xl bg-white px-5 py-2.5 text-xs font-bold text-zinc-950 transition-all hover:bg-zinc-200 active:scale-95 disabled:opacity-50 shadow-sm"
           >
             <Dices className={`h-4 w-4 ${isShuffling ? 'animate-spin' : ''}`} />
             Give Me Another
@@ -197,7 +197,7 @@ export default function RandomPage() {
               type="checkbox"
               checked={unreadOnly}
               onChange={(e) => setUnreadOnly(e.target.checked)}
-              className="rounded border-zinc-800 bg-zinc-950 text-amber-500 focus:ring-0"
+              className="rounded border-zinc-800 bg-zinc-950 accent-white text-white focus:ring-0"
             />
             <span>Unread only</span>
           </label>
@@ -207,7 +207,7 @@ export default function RandomPage() {
               type="checkbox"
               checked={applyCooldown}
               onChange={(e) => setApplyCooldown(e.target.checked)}
-              className="rounded border-zinc-800 bg-zinc-950 text-amber-500 focus:ring-0"
+              className="rounded border-zinc-800 bg-zinc-950 accent-white text-white focus:ring-0"
             />
             <span>7-day cooldown (avoid recent)</span>
           </label>
@@ -216,7 +216,7 @@ export default function RandomPage() {
         {/* Random Card Display */}
         {isLoading || isShuffling ? (
           <div className="flex flex-col items-center justify-center py-28 text-zinc-500">
-            <Loader2 className="h-6 w-6 animate-spin text-amber-500" />
+            <Loader2 className="h-6 w-6 animate-spin text-zinc-400" />
             <span className="mt-2 text-xs">Finding a random note...</span>
           </div>
         ) : !currentRandomRecord ? (
@@ -249,7 +249,7 @@ export default function RandomPage() {
               <div className="flex items-center justify-between gap-2 mb-3">
                 <div className="flex items-center gap-1.5 flex-wrap">
                   {currentRandomRecord.tags && currentRandomRecord.tags.map((tag) => (
-                    <span key={tag.id} className="rounded-md bg-zinc-800/80 px-2 py-0.5 text-[10px] font-medium text-zinc-400">
+                    <span key={tag.id} className="rounded-md bg-zinc-800/80 px-2 py-0.5 text-[10px] font-medium text-zinc-300">
                       #{tag.name}
                     </span>
                   ))}
@@ -264,7 +264,7 @@ export default function RandomPage() {
               {/* Title */}
               <Link
                 href={`/records/${currentRandomRecord.id}`}
-                className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-50 hover:text-amber-400 transition-colors"
+                className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-50 hover:text-white transition-colors"
               >
                 {currentRandomRecord.title}
               </Link>
@@ -279,7 +279,7 @@ export default function RandomPage() {
                   href={currentRandomRecord.source_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="mt-2 inline-flex items-center gap-1.5 text-xs text-amber-400/80 hover:text-amber-300 transition-colors truncate max-w-full"
+                  className="mt-2 inline-flex items-center gap-1.5 text-xs text-zinc-300 hover:text-white underline underline-offset-2 transition-colors truncate max-w-full"
                 >
                   <ExternalLink className="h-3 w-3 shrink-0" />
                   <span className="truncate">{currentRandomRecord.source_url}</span>
@@ -293,14 +293,14 @@ export default function RandomPage() {
 
             {/* Card Footer */}
             <div className="mt-6 flex items-center justify-between border-t border-zinc-800/80 pt-4 text-xs text-zinc-500">
-              <span className="flex items-center gap-1">
-                <Sparkles className="h-3 w-3 text-zinc-600" />
+              <span className="flex items-center gap-1 font-mono text-[10px]">
+                <Sparkles className="h-3 w-3 text-zinc-400" />
                 Stage {currentRandomRecord.review_stage}
               </span>
 
               <Link
                 href={`/records/${currentRandomRecord.id}`}
-                className="text-xs font-semibold text-amber-400 hover:text-amber-300 transition-colors"
+                className="text-xs font-semibold text-zinc-200 hover:text-white underline underline-offset-4 transition-colors"
               >
                 View Full Record →
               </Link>

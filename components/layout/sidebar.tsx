@@ -55,7 +55,7 @@ export function Sidebar({ dueCount = 0, userEmail, onQuickCapture }: SidebarProp
       <div className="flex flex-col gap-6">
         {/* Logo & Brand */}
         <Link href="/" className="flex items-center gap-3 px-2 py-1 group">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl overflow-hidden bg-zinc-900 ring-1 ring-amber-500/20 group-hover:ring-amber-500/50 transition-all shadow-sm">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl overflow-hidden bg-zinc-900 ring-1 ring-white/10 group-hover:ring-white/30 transition-all shadow-sm">
             <Image
               src="/images/punk-records-logo.png"
               alt="Punk Records Logo"
@@ -74,7 +74,7 @@ export function Sidebar({ dueCount = 0, userEmail, onQuickCapture }: SidebarProp
         {/* Quick Capture Button */}
         <button
           onClick={onQuickCapture}
-          className="flex w-full items-center justify-center gap-2 rounded-xl bg-amber-500 px-4 py-2.5 text-xs font-semibold text-zinc-950 shadow-sm transition-all hover:bg-amber-400 active:scale-[0.98]"
+          className="flex w-full items-center justify-center gap-2 rounded-xl bg-white px-4 py-2.5 text-xs font-bold text-zinc-950 shadow-sm transition-all hover:bg-zinc-200 active:scale-[0.98]"
         >
           <Plus className="h-4 w-4 stroke-[2.5]" />
           Quick Capture
@@ -91,16 +91,16 @@ export function Sidebar({ dueCount = 0, userEmail, onQuickCapture }: SidebarProp
                 href={item.href}
                 className={`flex items-center justify-between rounded-xl px-3 py-2.5 text-xs font-medium transition-colors ${
                   isActive
-                    ? 'bg-zinc-800/80 text-amber-400 font-semibold'
-                    : 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200'
+                    ? 'bg-zinc-800 text-zinc-100 font-semibold shadow-inner'
+                    : 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100'
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  <Icon className={`h-4 w-4 ${isActive ? 'text-amber-400' : 'text-zinc-500'}`} />
+                  <Icon className={`h-4 w-4 ${isActive ? 'text-zinc-100' : 'text-zinc-500'}`} />
                   <span>{item.label}</span>
                 </div>
                 {item.badge !== null && (
-                  <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-500/20 px-1.5 text-[10px] font-bold text-amber-400">
+                  <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-white px-1.5 text-[10px] font-bold text-zinc-950 font-mono shadow-sm">
                     {item.badge}
                   </span>
                 )}
@@ -114,10 +114,13 @@ export function Sidebar({ dueCount = 0, userEmail, onQuickCapture }: SidebarProp
       <div className="border-t border-zinc-800/80 pt-3">
         <div className="flex items-center justify-between px-2 py-1.5">
           <div className="flex flex-col overflow-hidden">
-            <span className="text-xs font-medium text-zinc-300 truncate">
+            <span className="text-xs font-medium text-zinc-200 truncate">
               {userEmail ?? 'User'}
             </span>
-            <span className="text-[10px] text-zinc-500">Connected</span>
+            <span className="text-[10px] text-zinc-500 flex items-center gap-1">
+              <span className="h-1.5 w-1.5 rounded-full bg-zinc-400 inline-block animate-pulse" />
+              Connected
+            </span>
           </div>
           <button
             onClick={handleLogout}

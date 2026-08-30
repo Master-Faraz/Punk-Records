@@ -75,7 +75,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         {/* Mobile Top Header */}
         <header className="flex md:hidden h-14 items-center justify-between border-b border-zinc-800/80 bg-zinc-950/80 px-4 backdrop-blur-md">
           <Link href="/" className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg overflow-hidden bg-zinc-900 ring-1 ring-amber-500/20 shadow-sm">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg overflow-hidden bg-zinc-900 ring-1 ring-white/10 shadow-sm">
               <Image
                 src="/images/punk-records-logo.png"
                 alt="Punk Records Logo"
@@ -90,7 +90,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
           <button
             onClick={() => setIsQuickCaptureOpen(true)}
-            className="flex items-center gap-1.5 rounded-lg bg-amber-500/10 px-3 py-1.5 text-xs font-semibold text-amber-400 ring-1 ring-amber-500/20 active:scale-95"
+            className="flex items-center gap-1.5 rounded-lg bg-white px-3 py-1.5 text-xs font-bold text-zinc-950 shadow-sm active:scale-95 transition-all hover:bg-zinc-200"
           >
             <Plus className="h-3.5 w-3.5 stroke-[2.5]" />
             Capture

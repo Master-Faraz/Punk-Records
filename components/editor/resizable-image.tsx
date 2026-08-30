@@ -128,7 +128,7 @@ export function ResizableImageComponent({
                 type="button"
                 onClick={() => updateAttributes({ alignment: 'left' })}
                 className={`rounded-lg p-1.5 transition-colors ${
-                  alignment === 'left' ? 'bg-amber-500/20 text-amber-400 font-bold' : 'text-zinc-400 hover:bg-zinc-800'
+                  alignment === 'left' ? 'bg-white text-zinc-950 font-bold shadow-sm' : 'text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200'
                 }`}
                 title="Align Left"
               >
@@ -138,7 +138,7 @@ export function ResizableImageComponent({
                 type="button"
                 onClick={() => updateAttributes({ alignment: 'center' })}
                 className={`rounded-lg p-1.5 transition-colors ${
-                  alignment === 'center' ? 'bg-amber-500/20 text-amber-400 font-bold' : 'text-zinc-400 hover:bg-zinc-800'
+                  alignment === 'center' ? 'bg-white text-zinc-950 font-bold shadow-sm' : 'text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200'
                 }`}
                 title="Align Center"
               >
@@ -148,7 +148,7 @@ export function ResizableImageComponent({
                 type="button"
                 onClick={() => updateAttributes({ alignment: 'right' })}
                 className={`rounded-lg p-1.5 transition-colors ${
-                  alignment === 'right' ? 'bg-amber-500/20 text-amber-400 font-bold' : 'text-zinc-400 hover:bg-zinc-800'
+                  alignment === 'right' ? 'bg-white text-zinc-950 font-bold shadow-sm' : 'text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200'
                 }`}
                 title="Align Right"
               >
@@ -164,7 +164,7 @@ export function ResizableImageComponent({
                 updateAttributes({ width: '100%' })
               }}
               className={`rounded-lg px-2 py-1 text-[11px] font-medium transition-colors ${
-                currentWidth === '100%' ? 'bg-amber-500/20 text-amber-400 font-bold' : 'text-zinc-400 hover:bg-zinc-800'
+                currentWidth === '100%' ? 'bg-white text-zinc-950 font-bold shadow-sm' : 'text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200'
               }`}
               title="Full Width"
             >
@@ -185,7 +185,7 @@ export function ResizableImageComponent({
 
         {/* Live Size Dimensions Indicator Badge while dragging */}
         {isDragging && dragDisplayWidth && (
-          <div className="absolute top-3 left-1/2 -translate-x-1/2 z-30 rounded-full bg-zinc-950/90 border border-amber-500/50 px-3 py-1 text-[11px] font-mono font-semibold text-amber-400 shadow-xl backdrop-blur-md">
+          <div className="absolute top-3 left-1/2 -translate-x-1/2 z-30 rounded-full bg-zinc-950/90 border border-zinc-700 px-3 py-1 text-[11px] font-mono font-semibold text-zinc-100 shadow-xl backdrop-blur-md">
             {dragDisplayWidth}
           </div>
         )}
@@ -198,7 +198,7 @@ export function ResizableImageComponent({
           alt={alt || 'Record Image'}
           className={`w-full rounded-2xl border transition-all duration-75 block object-contain ${
             activeSelected
-              ? 'border-amber-500 ring-4 ring-amber-500/20 shadow-2xl'
+              ? 'border-zinc-400 ring-4 ring-white/10 shadow-2xl'
               : 'border-zinc-800 hover:border-zinc-700'
           }`}
           draggable={false}
@@ -210,25 +210,25 @@ export function ResizableImageComponent({
             {/* Top-Left Corner Handle */}
             <div
               onMouseDown={(e) => startResizing('corner-left', e)}
-              className="absolute -top-2 -left-2 h-4 w-4 cursor-nwse-resize rounded-full bg-amber-400 ring-2 ring-zinc-950 shadow-md hover:scale-125 transition-transform"
+              className="absolute -top-2 -left-2 h-4 w-4 cursor-nwse-resize rounded-full bg-white ring-2 ring-zinc-950 shadow-md hover:scale-125 transition-transform"
             />
 
             {/* Top-Right Corner Handle */}
             <div
               onMouseDown={(e) => startResizing('corner-right', e)}
-              className="absolute -top-2 -right-2 h-4 w-4 cursor-nesw-resize rounded-full bg-amber-400 ring-2 ring-zinc-950 shadow-md hover:scale-125 transition-transform"
+              className="absolute -top-2 -right-2 h-4 w-4 cursor-nesw-resize rounded-full bg-white ring-2 ring-zinc-950 shadow-md hover:scale-125 transition-transform"
             />
 
             {/* Bottom-Left Corner Handle */}
             <div
               onMouseDown={(e) => startResizing('corner-left', e)}
-              className="absolute -bottom-2 -left-2 h-4 w-4 cursor-nesw-resize rounded-full bg-amber-400 ring-2 ring-zinc-950 shadow-md hover:scale-125 transition-transform"
+              className="absolute -bottom-2 -left-2 h-4 w-4 cursor-nesw-resize rounded-full bg-white ring-2 ring-zinc-950 shadow-md hover:scale-125 transition-transform"
             />
 
             {/* Bottom-Right Corner Handle */}
             <div
               onMouseDown={(e) => startResizing('corner-right', e)}
-              className="absolute -bottom-2 -right-2 h-4 w-4 cursor-nwse-resize rounded-full bg-amber-400 ring-2 ring-zinc-950 shadow-md hover:scale-125 transition-transform flex items-center justify-center"
+              className="absolute -bottom-2 -right-2 h-4 w-4 cursor-nwse-resize rounded-full bg-white ring-2 ring-zinc-950 shadow-md hover:scale-125 transition-transform flex items-center justify-center"
             >
               <div className="h-1.5 w-1.5 rounded-full bg-zinc-950" />
             </div>
@@ -236,13 +236,13 @@ export function ResizableImageComponent({
             {/* Left Edge Drag Bar */}
             <div
               onMouseDown={(e) => startResizing('left', e)}
-              className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 h-10 w-2.5 cursor-ew-resize rounded-full bg-amber-400/90 ring-2 ring-zinc-950 shadow-md hover:scale-110 hover:bg-amber-400 transition-all"
+              className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 h-10 w-2.5 cursor-ew-resize rounded-full bg-white ring-2 ring-zinc-950 shadow-md hover:scale-110 transition-all"
             />
 
             {/* Right Edge Drag Bar */}
             <div
               onMouseDown={(e) => startResizing('right', e)}
-              className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 h-10 w-2.5 cursor-ew-resize rounded-full bg-amber-400/90 ring-2 ring-zinc-950 shadow-md hover:scale-110 hover:bg-amber-400 transition-all"
+              className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 h-10 w-2.5 cursor-ew-resize rounded-full bg-white ring-2 ring-zinc-950 shadow-md hover:scale-110 transition-all"
             />
           </>
         )}

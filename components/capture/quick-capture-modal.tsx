@@ -99,8 +99,8 @@ export function QuickCaptureModal({ isOpen, onClose }: QuickCaptureModalProps) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between pb-4 border-b border-zinc-800">
-          <div className="flex items-center gap-2 text-amber-400 font-semibold text-sm">
-            <Zap className="h-4 w-4" />
+          <div className="flex items-center gap-2 text-zinc-100 font-semibold text-sm">
+            <Zap className="h-4 w-4 text-zinc-300" />
             <span>Quick Capture</span>
           </div>
           <button
@@ -127,7 +127,7 @@ export function QuickCaptureModal({ isOpen, onClose }: QuickCaptureModalProps) {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Record Title or Main Takeaway..."
-              className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3.5 py-2.5 text-sm font-medium text-zinc-100 placeholder-zinc-500 focus:border-amber-500/50 focus:outline-none focus:ring-1 focus:ring-amber-500/50"
+              className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3.5 py-2.5 text-sm font-medium text-zinc-100 placeholder-zinc-500 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500"
             />
           </div>
 
@@ -137,7 +137,7 @@ export function QuickCaptureModal({ isOpen, onClose }: QuickCaptureModalProps) {
               value={content}
               onChange={(e) => setContent(e.target.value)}
               placeholder="Paste notes, summary, key highlights, or thoughts..."
-              className="w-full resize-none rounded-xl border border-zinc-800 bg-zinc-950 px-3.5 py-2.5 text-sm text-zinc-200 placeholder-zinc-500 focus:border-amber-500/50 focus:outline-none focus:ring-1 focus:ring-amber-500/50"
+              className="w-full resize-none rounded-xl border border-zinc-800 bg-zinc-950 px-3.5 py-2.5 text-sm text-zinc-200 placeholder-zinc-500 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500"
             />
           </div>
 
@@ -148,15 +148,15 @@ export function QuickCaptureModal({ isOpen, onClose }: QuickCaptureModalProps) {
               value={sourceUrl}
               onChange={(e) => setSourceUrl(e.target.value)}
               placeholder="Source link / YouTube video (optional)..."
-              className="w-full rounded-xl border border-zinc-800 bg-zinc-950 pl-9 pr-3.5 py-2.5 text-xs text-zinc-300 placeholder-zinc-500 focus:border-amber-500/50 focus:outline-none focus:ring-1 focus:ring-amber-500/50"
+              className="w-full rounded-xl border border-zinc-800 bg-zinc-950 pl-9 pr-3.5 py-2.5 text-xs text-zinc-300 placeholder-zinc-500 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500"
             />
           </div>
 
           <TagInput selectedTags={tags} onChange={setTags} />
 
           <div className="flex items-center justify-between pt-2 border-t border-zinc-800/80">
-            <span className="text-[11px] text-zinc-500 flex items-center gap-1">
-              <Sparkles className="h-3 w-3 text-amber-500/70" />
+            <span className="text-[11px] text-zinc-500 flex items-center gap-1 font-mono">
+              <Sparkles className="h-3 w-3 text-zinc-400" />
               Due in 1 day for review
             </span>
             <div className="flex gap-2">
@@ -170,9 +170,9 @@ export function QuickCaptureModal({ isOpen, onClose }: QuickCaptureModalProps) {
               <button
                 type="submit"
                 disabled={createMutation.isPending || !title.trim()}
-                className="flex items-center gap-2 rounded-xl bg-amber-500 px-5 py-2 text-xs font-semibold text-zinc-950 transition-all hover:bg-amber-400 disabled:opacity-50"
+                className="flex items-center gap-2 rounded-xl bg-white px-5 py-2 text-xs font-bold text-zinc-950 transition-all hover:bg-zinc-200 disabled:opacity-50 shadow-sm"
               >
-                {createMutation.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : 'Save Record'}
+                {createMutation.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin text-zinc-950" /> : 'Save Record'}
               </button>
             </div>
           </div>

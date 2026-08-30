@@ -133,7 +133,7 @@ export default function RecordDetailPage({ params }: { params: Promise<{ id: str
     return (
       <AppShell>
         <div className="flex flex-col items-center justify-center py-24 text-zinc-500">
-          <Loader2 className="h-6 w-6 animate-spin text-teal-400" />
+          <Loader2 className="h-6 w-6 animate-spin text-zinc-400" />
           <span className="mt-2 text-xs">Loading record...</span>
         </div>
       </AppShell>
@@ -145,7 +145,7 @@ export default function RecordDetailPage({ params }: { params: Promise<{ id: str
       <AppShell>
         <div className="text-center py-20">
           <h2 className="text-lg font-bold text-zinc-200">Record not found</h2>
-          <Link href="/" className="mt-4 inline-block text-xs font-semibold text-teal-400">
+          <Link href="/" className="mt-4 inline-block text-xs font-semibold text-zinc-300 hover:text-white underline underline-offset-4">
             Return to Vault
           </Link>
         </div>
@@ -189,7 +189,7 @@ export default function RecordDetailPage({ params }: { params: Promise<{ id: str
         <nav aria-label="Breadcrumb and Actions" className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <Link
             href="/"
-            className="inline-flex items-center text-sm font-medium text-teal-400 hover:text-teal-300 transition-colors group"
+            className="inline-flex items-center text-sm font-medium text-zinc-300 hover:text-white transition-colors group"
           >
             <ArrowLeft className="h-4 w-4 mr-2 transition-transform group-hover:-translate-x-0.5" />
             Back to Vault
@@ -204,15 +204,15 @@ export default function RecordDetailPage({ params }: { params: Promise<{ id: str
                     key={tag.id}
                     className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-zinc-900/90 border border-zinc-800 shadow-sm text-xs font-semibold text-zinc-200"
                   >
-                    <TagIcon className="h-3 w-3 text-teal-400" />
+                    <TagIcon className="h-3 w-3 text-zinc-400" />
                     {tag.name}
                   </span>
                 ))}
               </div>
             )}
 
-            <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-zinc-900/90 border border-zinc-800 shadow-sm text-xs font-medium text-zinc-400">
-              <Calendar className="h-3.5 w-3.5 text-teal-400" />
+            <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-zinc-900/90 border border-zinc-800 shadow-sm text-xs font-medium text-zinc-400 font-mono">
+              <Calendar className="h-3.5 w-3.5 text-zinc-400" />
               {formattedDate}
             </span>
 
@@ -278,7 +278,7 @@ export default function RecordDetailPage({ params }: { params: Promise<{ id: str
                   href={record.source_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-xs text-teal-400 hover:text-teal-300 transition-colors"
+                  className="inline-flex items-center gap-1.5 text-xs text-zinc-300 hover:text-white underline underline-offset-2 transition-colors"
                 >
                   <ExternalLink className="h-3.5 w-3.5" />
                   <span>Open in YouTube</span>
@@ -292,7 +292,7 @@ export default function RecordDetailPage({ params }: { params: Promise<{ id: str
           <footer className="mt-10 flex flex-wrap items-center justify-between gap-4 border-t border-zinc-800/80 pt-6 text-sm text-zinc-400">
             <div className="flex items-center gap-4 flex-wrap text-xs sm:text-sm">
               <span className="flex items-center gap-1.5">
-                <Clock className="h-4 w-4 text-teal-400" />
+                <Clock className="h-4 w-4 text-zinc-400" />
                 Estimated reading time: ~{readingTimeMinutes} min
               </span>
 
@@ -301,16 +301,16 @@ export default function RecordDetailPage({ params }: { params: Promise<{ id: str
                 {record.read_count} reads
               </span>
 
-              <span className="flex items-center gap-1.5">
-                <Sparkles className="h-4 w-4 text-zinc-500" />
+              <span className="flex items-center gap-1.5 font-mono">
+                <Sparkles className="h-4 w-4 text-zinc-400" />
                 Stage {record.review_stage}
               </span>
             </div>
 
             <div className="flex items-center gap-2 text-xs sm:text-sm">
-              <Calendar className="h-4 w-4 text-teal-400" />
+              <Calendar className="h-4 w-4 text-zinc-400" />
               <span>Next review:</span>
-              <strong className={isDue ? 'text-teal-400 font-bold' : 'text-zinc-300'}>
+              <strong className={isDue ? 'text-white font-bold' : 'text-zinc-300'}>
                 {new Date(record.next_review_at).toLocaleDateString(undefined, {
                   month: 'short',
                   day: 'numeric',
@@ -321,9 +321,9 @@ export default function RecordDetailPage({ params }: { params: Promise<{ id: str
 
           {/* Direct Review Trigger if Due */}
           {isDue && (
-            <div className="mt-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 rounded-2xl border border-teal-500/30 bg-teal-500/10 p-4 sm:p-5">
+            <div className="mt-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 rounded-2xl border border-zinc-800 bg-zinc-950 p-4 sm:p-5">
               <div>
-                <span className="text-xs font-semibold text-teal-400 block">
+                <span className="text-xs font-semibold text-zinc-100 block">
                   This record is due for spaced review today!
                 </span>
                 <span className="text-[11px] text-zinc-400">
@@ -343,7 +343,7 @@ export default function RecordDetailPage({ params }: { params: Promise<{ id: str
                 <button
                   onClick={() => reviewMutation.mutate('remembered')}
                   disabled={reviewMutation.isPending}
-                  className="flex items-center gap-1 rounded-xl bg-teal-500 px-4 py-2 text-xs font-bold text-zinc-950 hover:bg-teal-400 transition-colors disabled:opacity-50 shadow-sm"
+                  className="flex items-center gap-1 rounded-xl bg-white px-4 py-2 text-xs font-bold text-zinc-950 hover:bg-zinc-200 transition-colors disabled:opacity-50 shadow-sm"
                 >
                   <Check className="h-3.5 w-3.5 stroke-[3]" />
                   Remembered

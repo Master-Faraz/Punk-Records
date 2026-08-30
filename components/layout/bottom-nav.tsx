@@ -18,7 +18,7 @@ export function BottomNav({ dueCount = 0, onQuickCapture }: BottomNavProps) {
         <Link
           href="/"
           className={`flex flex-col items-center justify-center gap-1 w-14 py-1 text-[10px] font-medium transition-colors ${
-            pathname === '/' ? 'text-amber-400 font-semibold' : 'text-zinc-400'
+            pathname === '/' ? 'text-zinc-100 font-bold' : 'text-zinc-500 hover:text-zinc-200'
           }`}
         >
           <BookOpen className="h-5 w-5" />
@@ -28,13 +28,13 @@ export function BottomNav({ dueCount = 0, onQuickCapture }: BottomNavProps) {
         <Link
           href="/review"
           className={`relative flex flex-col items-center justify-center gap-1 w-14 py-1 text-[10px] font-medium transition-colors ${
-            pathname === '/review' ? 'text-amber-400 font-semibold' : 'text-zinc-400'
+            pathname === '/review' ? 'text-zinc-100 font-bold' : 'text-zinc-500 hover:text-zinc-200'
           }`}
         >
           <Brain className="h-5 w-5" />
           <span>Review</span>
           {dueCount > 0 && (
-            <span className="absolute top-0.5 right-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-500 px-1 text-[9px] font-bold text-zinc-950">
+            <span className="absolute top-0.5 right-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-white px-1 text-[9px] font-bold text-zinc-950 font-mono shadow-sm">
               {dueCount}
             </span>
           )}
@@ -43,7 +43,7 @@ export function BottomNav({ dueCount = 0, onQuickCapture }: BottomNavProps) {
         {/* Center Quick Capture FAB */}
         <button
           onClick={onQuickCapture}
-          className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-500 text-zinc-950 shadow-lg shadow-amber-500/20 active:scale-95 transition-transform"
+          className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-zinc-950 shadow-lg active:scale-95 transition-all hover:bg-zinc-200"
           aria-label="Quick Capture"
         >
           <Plus className="h-5 w-5 stroke-[2.5]" />
@@ -52,7 +52,7 @@ export function BottomNav({ dueCount = 0, onQuickCapture }: BottomNavProps) {
         <Link
           href="/random"
           className={`flex flex-col items-center justify-center gap-1 w-14 py-1 text-[10px] font-medium transition-colors ${
-            pathname === '/random' ? 'text-amber-400 font-semibold' : 'text-zinc-400'
+            pathname === '/random' ? 'text-zinc-100 font-bold' : 'text-zinc-500 hover:text-zinc-200'
           }`}
         >
           <Dices className="h-5 w-5" />
@@ -62,7 +62,7 @@ export function BottomNav({ dueCount = 0, onQuickCapture }: BottomNavProps) {
         <Link
           href="/settings"
           className={`flex flex-col items-center justify-center gap-1 w-14 py-1 text-[10px] font-medium transition-colors ${
-            pathname === '/settings' ? 'text-amber-400 font-semibold' : 'text-zinc-400'
+            pathname === '/settings' ? 'text-zinc-100 font-bold' : 'text-zinc-500 hover:text-zinc-200'
           }`}
         >
           <Settings className="h-5 w-5" />
