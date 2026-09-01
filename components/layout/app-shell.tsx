@@ -6,11 +6,12 @@ import Link from 'next/link'
 import { Sidebar } from './sidebar'
 import { BottomNav } from './bottom-nav'
 import { QuickCaptureModal } from '../capture/quick-capture-modal'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { getAuthenticatedUser } from '@/lib/offline/auth'
+import { syncOutbox } from '@/lib/offline/sync'
 import dynamic from 'next/dynamic'
-import { Plus } from 'lucide-react'
+import { RefreshCw, Check } from 'lucide-react'
 
 const OfflineIndicator = dynamic(
   () => import('@/components/pwa/offline-indicator').then((mod) => mod.OfflineIndicator),
@@ -18,8 +19,28 @@ const OfflineIndicator = dynamic(
 )
 
 export function AppShell({ children }: { children: ReactNode }) {
+  const queryClient = useQueryClient()
   const [isQuickCaptureOpen, setIsQuickCaptureOpen] = useState(false)
   const [userEmail, setUserEmail] = useState<string | null>(null)
+  const [isSyncing, setIsSyncing] = useState(false)
+  const [justSynced, setJustSynced] = useState(false)
+
+  const handleQuickSync = async () => {
+    if (isSyncing) return
+    setIsSyncing(true)
+    try {
+      if (typeof navigator !== 'undefined' && navigator.onLine) {
+        await syncOutbox(queryClient)
+        await queryClient.invalidateQueries()
+      }
+      setJustSynced(true)
+      setTimeout(() => setJustSynced(false), 2000)
+    } catch (err) {
+      console.error('Quick sync error:', err)
+    } finally {
+      setIsSyncing(false)
+    }
+  }
 
   useEffect(() => {
     const checkUser = async () => {
@@ -77,7 +98,9 @@ export function AppShell({ children }: { children: ReactNode }) {
       <Sidebar
         dueCount={dueCount}
         userEmail={userEmail}
-        onQuickCapture={() => setIsQuickCaptureOpen(true)}
+        onQuickSync={handleQuickSync}
+        isSyncing={isSyncing}
+        justSynced={justSynced}
       />
 
       {/* Main Content Area */}
@@ -99,11 +122,22 @@ export function AppShell({ children }: { children: ReactNode }) {
           </Link>
 
           <button
-            onClick={() => setIsQuickCaptureOpen(true)}
-            className="flex items-center gap-1.5 rounded-lg bg-white px-3 py-1.5 text-xs font-bold text-zinc-950 shadow-sm active:scale-95 transition-all hover:bg-zinc-200"
+            onClick={handleQuickSync}
+            disabled={isSyncing}
+            className="flex items-center gap-1.5 rounded-lg bg-white px-3 py-1.5 text-xs font-bold text-zinc-950 shadow-sm active:scale-95 transition-all hover:bg-zinc-200 cursor-pointer disabled:opacity-80"
+            aria-label="Quick Sync"
           >
-            <Plus className="h-3.5 w-3.5 stroke-[2.5]" />
-            Capture
+            {justSynced ? (
+              <>
+                <Check className="h-3.5 w-3.5 stroke-[2.5] text-emerald-600" />
+                <span>Synced</span>
+              </>
+            ) : (
+              <>
+                <RefreshCw className={`h-3.5 w-3.5 stroke-[2.5] ${isSyncing ? 'animate-spin' : ''}`} />
+                <span>{isSyncing ? 'Syncing...' : 'Sync'}</span>
+              </>
+            )}
           </button>
         </header>
 
@@ -116,7 +150,9 @@ export function AppShell({ children }: { children: ReactNode }) {
       {/* Mobile Bottom Navigation */}
       <BottomNav
         dueCount={dueCount}
-        onQuickCapture={() => setIsQuickCaptureOpen(true)}
+        onQuickSync={handleQuickSync}
+        isSyncing={isSyncing}
+        justSynced={justSynced}
       />
 
       {/* Global Quick Capture Modal */}

@@ -3,16 +3,24 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { BookOpen, Brain, Dices, Plus, LogOut, Settings as SettingsIcon } from 'lucide-react'
+import { BookOpen, Brain, Dices, RefreshCw, Check, LogOut, Settings as SettingsIcon } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
 interface SidebarProps {
   dueCount?: number
   userEmail?: string | null
-  onQuickCapture?: () => void
+  onQuickSync?: () => void
+  isSyncing?: boolean
+  justSynced?: boolean
 }
 
-export function Sidebar({ dueCount = 0, userEmail, onQuickCapture }: SidebarProps) {
+export function Sidebar({
+  dueCount = 0,
+  userEmail,
+  onQuickSync,
+  isSyncing = false,
+  justSynced = false,
+}: SidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
 
@@ -71,13 +79,24 @@ export function Sidebar({ dueCount = 0, userEmail, onQuickCapture }: SidebarProp
           </div>
         </Link>
 
-        {/* Quick Capture Button */}
+        {/* Quick Sync Button */}
         <button
-          onClick={onQuickCapture}
-          className="flex w-full items-center justify-center gap-2 rounded-xl bg-white px-4 py-2.5 text-xs font-bold text-zinc-950 shadow-sm transition-all hover:bg-zinc-200 active:scale-[0.98]"
+          onClick={onQuickSync}
+          disabled={isSyncing}
+          className="flex w-full items-center justify-center gap-2 rounded-xl bg-white px-4 py-2.5 text-xs font-bold text-zinc-950 shadow-sm transition-all hover:bg-zinc-200 active:scale-[0.98] cursor-pointer disabled:opacity-80"
+          aria-label="Quick Sync across devices"
         >
-          <Plus className="h-4 w-4 stroke-[2.5]" />
-          Quick Capture
+          {justSynced ? (
+            <>
+              <Check className="h-4 w-4 stroke-[2.5] text-emerald-600" />
+              <span>Synced!</span>
+            </>
+          ) : (
+            <>
+              <RefreshCw className={`h-4 w-4 stroke-[2.5] ${isSyncing ? 'animate-spin text-zinc-700' : ''}`} />
+              <span>{isSyncing ? 'Syncing...' : 'Quick Sync'}</span>
+            </>
+          )}
         </button>
 
         {/* Nav Links */}

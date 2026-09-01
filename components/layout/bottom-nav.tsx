@@ -2,14 +2,21 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { BookOpen, Brain, Dices, Plus, Settings } from 'lucide-react'
+import { BookOpen, Brain, Dices, RefreshCw, Check, Settings } from 'lucide-react'
 
 interface BottomNavProps {
   dueCount?: number
-  onQuickCapture?: () => void
+  onQuickSync?: () => void
+  isSyncing?: boolean
+  justSynced?: boolean
 }
 
-export function BottomNav({ dueCount = 0, onQuickCapture }: BottomNavProps) {
+export function BottomNav({
+  dueCount = 0,
+  onQuickSync,
+  isSyncing = false,
+  justSynced = false,
+}: BottomNavProps) {
   const pathname = usePathname()
 
   return (
@@ -40,13 +47,18 @@ export function BottomNav({ dueCount = 0, onQuickCapture }: BottomNavProps) {
           )}
         </Link>
 
-        {/* Center Quick Capture FAB */}
+        {/* Center Quick Sync FAB */}
         <button
-          onClick={onQuickCapture}
-          className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-zinc-950 shadow-lg active:scale-95 transition-all hover:bg-zinc-200"
-          aria-label="Quick Capture"
+          onClick={onQuickSync}
+          disabled={isSyncing}
+          className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-zinc-950 shadow-lg active:scale-95 transition-all hover:bg-zinc-200 cursor-pointer disabled:opacity-80"
+          aria-label="Quick Sync across devices"
         >
-          <Plus className="h-5 w-5 stroke-[2.5]" />
+          {justSynced ? (
+            <Check className="h-5 w-5 stroke-[2.5] text-emerald-600" />
+          ) : (
+            <RefreshCw className={`h-5 w-5 stroke-[2.5] ${isSyncing ? 'animate-spin text-zinc-700' : ''}`} />
+          )}
         </button>
 
         <Link
