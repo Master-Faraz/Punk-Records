@@ -21,6 +21,8 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 
+import { getAuthenticatedUser } from '@/lib/offline/auth'
+
 export default function RandomPage() {
   const queryClient = useQueryClient()
   const [selectedTag, setSelectedTag] = useState<string>('all')
@@ -33,73 +35,87 @@ export default function RandomPage() {
   const { data: allTags = [] } = useQuery<Tag[]>({
     queryKey: ['tags'],
     queryFn: async () => {
-      const supabase = createClient()
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
+      const user = await getAuthenticatedUser()
       if (!user) return []
 
-      const { data, error } = await supabase
-        .from('tags')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('name', { ascending: true })
+      try {
+        const supabase = createClient()
+        const { data, error } = await supabase
+          .from('tags')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('name', { ascending: true })
 
-      if (error) throw error
-      return data || []
+        if (error) return []
+        return data || []
+      } catch {
+        return []
+      }
     },
   })
 
-  // Pull a random record
+  // Pull a random record (supports online DB and offline cached records)
   const fetchRandomRecord = async () => {
     setIsShuffling(true)
-    const supabase = createClient()
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
+    const user = await getAuthenticatedUser()
 
     if (!user) {
       setIsShuffling(false)
       return
     }
 
-    let query = supabase
-      .from('records')
-      .select(`
-        *,
-        record_tags!inner(
-          tag:tags(*)
-        )
-      `)
-      .eq('user_id', user.id)
-      .eq('is_archived', false)
+    let eligibleList: any[] = []
 
-    if (unreadOnly) {
-      query = query.eq('read_count', 0)
-    }
+    if (!navigator.onLine) {
+      // Offline fallback: use query cache records
+      const cachedRecords =
+        queryClient.getQueryData<RecordItem[]>(['records', 'all', 'newest']) ||
+        queryClient.getQueryData<RecordItem[]>(['due-records']) ||
+        []
+      eligibleList = [...cachedRecords]
+    } else {
+      try {
+        const supabase = createClient()
+        let query = supabase
+          .from('records')
+          .select(`
+            *,
+            record_tags!inner(
+              tag:tags(*)
+            )
+          `)
+          .eq('user_id', user.id)
+          .eq('is_archived', false)
 
-    if (selectedTag !== 'all') {
-      query = query.eq('record_tags.tag_id', selectedTag)
-    }
+        if (unreadOnly) {
+          query = query.eq('read_count', 0)
+        }
 
-    const { data, error } = await query
+        if (selectedTag !== 'all') {
+          query = query.eq('record_tags.tag_id', selectedTag)
+        }
 
-    let eligibleList: any[] = data || []
+        const { data } = await query
+        eligibleList = data || []
 
-    // If no tag was joined, fetch without inner join
-    if (selectedTag === 'all' && eligibleList.length === 0) {
-      const { data: fallbackData } = await supabase
-        .from('records')
-        .select(`
-          *,
-          record_tags(
-            tag:tags(*)
-          )
-        `)
-        .eq('user_id', user.id)
-        .eq('is_archived', false)
+        if (selectedTag === 'all' && eligibleList.length === 0) {
+          const { data: fallbackData } = await supabase
+            .from('records')
+            .select(`
+              *,
+              record_tags(
+                tag:tags(*)
+              )
+            `)
+            .eq('user_id', user.id)
+            .eq('is_archived', false)
 
-      eligibleList = fallbackData || []
+          eligibleList = fallbackData || []
+        }
+      } catch {
+        const cachedRecords = queryClient.getQueryData<RecordItem[]>(['records', 'all', 'newest']) || []
+        eligibleList = [...cachedRecords]
+      }
     }
 
     // Apply 7-day cooldown filter if enabled
@@ -120,23 +136,27 @@ export default function RandomPage() {
 
       const formattedRecord: RecordItem = {
         ...picked,
-        tags: picked.record_tags?.map((rt: any) => rt.tag).filter(Boolean) || [],
+        tags: picked.tags || picked.record_tags?.map((rt: any) => rt.tag).filter(Boolean) || [],
       }
 
       setCurrentRandomRecord(formattedRecord)
 
-      // Increment read_count
-      await supabase
-        .from('records')
-        .update({ read_count: (formattedRecord.read_count || 0) + 1 })
-        .eq('id', formattedRecord.id)
-
-      queryClient.invalidateQueries({ queryKey: ['records'] })
+      // Increment read_count if online
+      if (navigator.onLine) {
+        try {
+          const supabase = createClient()
+          await supabase
+            .from('records')
+            .update({ read_count: (formattedRecord.read_count || 0) + 1 })
+            .eq('id', formattedRecord.id)
+          queryClient.invalidateQueries({ queryKey: ['records'] })
+        } catch {}
+      }
     } else {
       setCurrentRandomRecord(null)
     }
 
-    setTimeout(() => setIsShuffling(false), 250)
+    setIsShuffling(false)
   }
 
   // Load initial random record if not loaded

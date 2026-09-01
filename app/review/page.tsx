@@ -10,6 +10,8 @@ import { getUserSettings, computeNextReview } from '@/lib/settings'
 import { DEFAULT_USER_SETTINGS, type RecordItem, type UserSettings } from '@/types/database'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
+import { getAuthenticatedUser } from '@/lib/offline/auth'
+import { enqueueMutation } from '@/lib/offline/outbox'
 import {
   Brain,
   Check,
@@ -49,31 +51,33 @@ export default function ReviewPage() {
   const { data: dueRecords = [], isLoading } = useQuery<RecordItem[]>({
     queryKey: ['due-records'],
     queryFn: async () => {
-      const supabase = createClient()
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
+      const user = await getAuthenticatedUser()
       if (!user) return []
 
-      const nowIso = new Date().toISOString()
-      const { data, error } = await supabase
-        .from('records')
-        .select(`
-          *,
-          record_tags(
-            tag:tags(*)
-          )
-        `)
-        .eq('user_id', user.id)
-        .eq('is_archived', false)
-        .lte('next_review_at', nowIso)
-        .order('next_review_at', { ascending: true })
+      try {
+        const supabase = createClient()
+        const nowIso = new Date().toISOString()
+        const { data, error } = await supabase
+          .from('records')
+          .select(`
+            *,
+            record_tags(
+              tag:tags(*)
+            )
+          `)
+          .eq('user_id', user.id)
+          .eq('is_archived', false)
+          .lte('next_review_at', nowIso)
+          .order('next_review_at', { ascending: true })
 
-      if (error) throw error
-      return (data || []).map((r: any) => ({
-        ...r,
-        tags: r.record_tags?.map((rt: any) => rt.tag).filter(Boolean) || [],
-      }))
+        if (error) return []
+        return (data || []).map((r: any) => ({
+          ...r,
+          tags: r.record_tags?.map((rt: any) => rt.tag).filter(Boolean) || [],
+        }))
+      } catch {
+        return []
+      }
     },
   })
 
@@ -84,7 +88,7 @@ export default function ReviewPage() {
     }
   }, [dueRecords, sessionTotal])
 
-  // Review mutation with optimistic transitions
+  // Review mutation with optimistic transitions & offline support
   const reviewMutation = useMutation({
     mutationFn: async ({
       record,
@@ -93,43 +97,76 @@ export default function ReviewPage() {
       record: RecordItem
       result: 'remembered' | 'forgot'
     }) => {
-      const supabase = createClient()
       const currentStage = record.review_stage || 0
-
       const settings = await getUserSettings()
       const { nextStage, nextReviewAt } = computeNextReview(currentStage, result, settings)
       const nowIso = new Date().toISOString()
 
-      // 1. Record review in history
-      await supabase.from('reviews').insert({
-        record_id: record.id,
-        user_id: record.user_id,
-        scheduled_for: record.next_review_at,
-        reviewed_at: nowIso,
+      const reviewPayload = {
+        recordId: record.id,
         result,
-        previous_stage: currentStage,
-        next_stage: nextStage,
+        scheduledFor: record.next_review_at,
+        previousStage: currentStage,
+        nextStage,
+        nextReviewAt,
+        reviewedAt: nowIso,
+      }
+
+      // Optimistic cache update: advance due list and decrement due count
+      queryClient.setQueryData(['due-records'], (old: RecordItem[] | undefined) => {
+        return Array.isArray(old) ? old.filter((r) => r.id !== record.id) : []
+      })
+      queryClient.setQueryData(['due-count'], (old: number | undefined) => {
+        return typeof old === 'number' ? Math.max(0, old - 1) : 0
       })
 
-      // 2. Update record state
-      const { error } = await supabase
-        .from('records')
-        .update({
-          review_stage: nextStage,
-          last_reviewed_at: nowIso,
-          next_review_at: nextReviewAt,
-          read_count: (record.read_count || 0) + 1,
-        })
-        .eq('id', record.id)
+      // If offline, queue mutation directly
+      if (!navigator.onLine) {
+        await enqueueMutation('REVIEW_RECORD', reviewPayload)
+        return
+      }
 
-      if (error) throw error
+      try {
+        const supabase = createClient()
+        // 1. Record review in history
+        await supabase.from('reviews').insert({
+          record_id: record.id,
+          user_id: record.user_id,
+          scheduled_for: record.next_review_at,
+          reviewed_at: nowIso,
+          result,
+          previous_stage: currentStage,
+          next_stage: nextStage,
+        })
+
+        // 2. Update record state
+        const { error } = await supabase
+          .from('records')
+          .update({
+            review_stage: nextStage,
+            last_reviewed_at: nowIso,
+            next_review_at: nextReviewAt,
+            read_count: (record.read_count || 0) + 1,
+          })
+          .eq('id', record.id)
+
+        if (error) throw error
+      } catch (err: any) {
+        if (err?.name === 'TypeError' || String(err).includes('fetch') || !navigator.onLine) {
+          await enqueueMutation('REVIEW_RECORD', reviewPayload)
+          return
+        }
+        throw err
+      }
     },
     onSuccess: () => {
       setIsContentRevealed(false)
       setCompletedInSession((prev) => prev + 1)
-      queryClient.invalidateQueries({ queryKey: ['due-records'] })
-      queryClient.invalidateQueries({ queryKey: ['due-count'] })
-      queryClient.invalidateQueries({ queryKey: ['records'] })
+      if (navigator.onLine) {
+        queryClient.invalidateQueries({ queryKey: ['due-records'] })
+        queryClient.invalidateQueries({ queryKey: ['due-count'] })
+        queryClient.invalidateQueries({ queryKey: ['records'] })
+      }
     },
   })
 

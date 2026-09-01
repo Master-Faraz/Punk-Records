@@ -6,6 +6,8 @@ import { createClient } from '@/lib/supabase/client'
 import type { Tag } from '@/types/database'
 import { X, Plus, Hash, Check, ChevronDown } from 'lucide-react'
 
+import { getAuthenticatedUser } from '@/lib/offline/auth'
+
 interface TagInputProps {
   selectedTags: string[] // tag names
   onChange: (tags: string[]) => void
@@ -20,20 +22,22 @@ export function TagInput({ selectedTags, onChange }: TagInputProps) {
   const { data: allTags = [] } = useQuery<Tag[]>({
     queryKey: ['tags'],
     queryFn: async () => {
-      const supabase = createClient()
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
+      const user = await getAuthenticatedUser()
       if (!user) return []
 
-      const { data, error } = await supabase
-        .from('tags')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('name', { ascending: true })
+      try {
+        const supabase = createClient()
+        const { data, error } = await supabase
+          .from('tags')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('name', { ascending: true })
 
-      if (error) throw error
-      return data || []
+        if (error) return []
+        return data || []
+      } catch {
+        return []
+      }
     },
   })
 

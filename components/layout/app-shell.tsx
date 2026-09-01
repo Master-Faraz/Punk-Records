@@ -8,6 +8,8 @@ import { BottomNav } from './bottom-nav'
 import { QuickCaptureModal } from '../capture/quick-capture-modal'
 import { useQuery } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
+import { getAuthenticatedUser } from '@/lib/offline/auth'
+import { OfflineIndicator } from '@/components/pwa/offline-indicator'
 import { Plus } from 'lucide-react'
 
 export function AppShell({ children }: { children: ReactNode }) {
@@ -16,10 +18,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const checkUser = async () => {
-      const supabase = createClient()
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
+      const user = await getAuthenticatedUser()
       setUserEmail(user?.email ?? null)
     }
     checkUser()
@@ -29,22 +28,24 @@ export function AppShell({ children }: { children: ReactNode }) {
   const { data: dueCount = 0 } = useQuery({
     queryKey: ['due-count'],
     queryFn: async () => {
-      const supabase = createClient()
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
+      const user = await getAuthenticatedUser()
       if (!user) return 0
 
-      const nowIso = new Date().toISOString()
-      const { count, error } = await supabase
-        .from('records')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', user.id)
-        .eq('is_archived', false)
-        .lte('next_review_at', nowIso)
+      try {
+        const supabase = createClient()
+        const nowIso = new Date().toISOString()
+        const { count, error } = await supabase
+          .from('records')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', user.id)
+          .eq('is_archived', false)
+          .lte('next_review_at', nowIso)
 
-      if (error) return 0
-      return count ?? 0
+        if (error) return 0
+        return count ?? 0
+      } catch {
+        return 0
+      }
     },
     refetchInterval: 60 * 1000, // check every minute
   })
@@ -114,6 +115,9 @@ export function AppShell({ children }: { children: ReactNode }) {
         isOpen={isQuickCaptureOpen}
         onClose={() => setIsQuickCaptureOpen(false)}
       />
+
+      {/* Offline & Sync Status Indicator */}
+      <OfflineIndicator />
     </div>
   )
 }

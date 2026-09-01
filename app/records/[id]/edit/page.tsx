@@ -14,6 +14,9 @@ import type { RecordItem } from '@/types/database'
 import { ArrowLeft, Save, Loader2, Link2, Image as ImageIcon, X } from 'lucide-react'
 import Link from 'next/link'
 
+import { getAuthenticatedUser } from '@/lib/offline/auth'
+import { enqueueMutation } from '@/lib/offline/outbox'
+
 export default function EditRecordPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const router = useRouter()
@@ -31,28 +34,30 @@ export default function EditRecordPage({ params }: { params: Promise<{ id: strin
   const { data: record, isLoading } = useQuery<RecordItem | null>({
     queryKey: ['record', id],
     queryFn: async () => {
-      const supabase = createClient()
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
+      const user = await getAuthenticatedUser()
       if (!user) return null
 
-      const { data, error } = await supabase
-        .from('records')
-        .select(`
-          *,
-          record_tags(
-            tag:tags(*)
-          )
-        `)
-        .eq('id', id)
-        .eq('user_id', user.id)
-        .single()
+      try {
+        const supabase = createClient()
+        const { data, error } = await supabase
+          .from('records')
+          .select(`
+            *,
+            record_tags(
+              tag:tags(*)
+            )
+          `)
+          .eq('id', id)
+          .eq('user_id', user.id)
+          .single()
 
-      if (error) throw error
-      return {
-        ...data,
-        tags: data.record_tags?.map((rt: any) => rt.tag).filter(Boolean) || [],
+        if (error) return null
+        return {
+          ...data,
+          tags: data.record_tags?.map((rt: any) => rt.tag).filter(Boolean) || [],
+        }
+      } catch {
+        return null
       }
     },
   })
@@ -81,71 +86,103 @@ export default function EditRecordPage({ params }: { params: Promise<{ id: strin
   // Update Mutation (Uploads pending blob assets & purges removed assets)
   const updateMutation = useMutation({
     mutationFn: async () => {
-      const supabase = createClient()
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
+      const user = await getAuthenticatedUser()
       if (!user) throw new Error('User not authenticated')
-
-      // 1. Upload any pending local blob images (thumbnail & Tiptap images)
-      const { finalThumbnailUrl, finalContent } = await processAndUploadPendingAssets({
-        thumbnailUrl,
-        content,
-      })
-
-      // 2. Clean up any assets that were removed from the original record
-      if (record) {
-        await cleanupRemovedAssets(record, {
-          thumbnail_url: finalThumbnailUrl,
-          content: finalContent,
-        })
-      }
 
       const cleanUrl = sourceUrl.trim()
       const isYoutube = cleanUrl.includes('youtube.com') || cleanUrl.includes('youtu.be')
       const sourceType = isYoutube ? 'youtube' : cleanUrl ? 'article' : 'note'
 
-      // 3. Update record in database
-      const { error: recordError } = await supabase
-        .from('records')
-        .update({
-          title: title.trim(),
-          thumbnail_url: finalThumbnailUrl,
-          content: finalContent,
-          source_url: cleanUrl || null,
-          source_type: sourceType,
+      const updates = {
+        title: title.trim(),
+        thumbnail_url: thumbnailUrl,
+        content: content || record?.content,
+        source_url: cleanUrl || null,
+        source_type: sourceType,
+      }
+
+      // Optimistic cache update
+      queryClient.setQueryData(['record', id], (old: RecordItem | null | undefined) => {
+        if (!old) return old
+        return {
+          ...old,
+          ...updates,
+          tags: tags.map((t) => ({ id: `temp_${t}`, user_id: user.id, name: t, created_at: new Date().toISOString() })),
+        }
+      })
+
+      // If offline, queue mutation directly
+      if (!navigator.onLine) {
+        await enqueueMutation('UPDATE_RECORD', { recordId: id, updates, tags })
+        return
+      }
+
+      try {
+        // 1. Upload any pending local blob images (thumbnail & Tiptap images)
+        const { finalThumbnailUrl, finalContent } = await processAndUploadPendingAssets({
+          thumbnailUrl,
+          content,
         })
-        .eq('id', id)
-        .eq('user_id', user.id)
 
-      if (recordError) throw recordError
+        // 2. Clean up any assets that were removed from the original record
+        if (record) {
+          await cleanupRemovedAssets(record, {
+            thumbnail_url: finalThumbnailUrl,
+            content: finalContent,
+          })
+        }
 
-      // 4. Update tags
-      await supabase.from('record_tags').delete().eq('record_id', id)
+        const supabase = createClient()
+        // 3. Update record in database
+        const { error: recordError } = await supabase
+          .from('records')
+          .update({
+            title: title.trim(),
+            thumbnail_url: finalThumbnailUrl,
+            content: finalContent,
+            source_url: cleanUrl || null,
+            source_type: sourceType,
+          })
+          .eq('id', id)
+          .eq('user_id', user.id)
 
-      if (tags.length > 0) {
-        for (const tagName of tags) {
-          const { data: tagData } = await supabase
-            .from('tags')
-            .upsert({ user_id: user.id, name: tagName }, { onConflict: 'user_id,name' })
-            .select()
-            .single()
+        if (recordError) throw recordError
 
-          if (tagData) {
-            await supabase.from('record_tags').insert({
-              record_id: id,
-              tag_id: tagData.id,
-            })
+        // 4. Update tags
+        await supabase.from('record_tags').delete().eq('record_id', id)
+
+        if (tags.length > 0) {
+          for (const tagName of tags) {
+            const { data: tagData } = await supabase
+              .from('tags')
+              .upsert({ user_id: user.id, name: tagName }, { onConflict: 'user_id,name' })
+              .select()
+              .single()
+
+            if (tagData) {
+              await supabase.from('record_tags').insert({
+                record_id: id,
+                tag_id: tagData.id,
+              })
+            }
           }
         }
+      } catch (err: any) {
+        if (err?.name === 'TypeError' || String(err).includes('fetch') || !navigator.onLine) {
+          await enqueueMutation('UPDATE_RECORD', { recordId: id, updates, tags })
+          return
+        }
+        throw err
       }
     },
     onSuccess: async () => {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['record', id], refetchType: 'all' }),
-        queryClient.invalidateQueries({ queryKey: ['records'], refetchType: 'all' }),
-        queryClient.invalidateQueries({ queryKey: ['tags'], refetchType: 'all' }),
-      ])
+      if (navigator.onLine) {
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: ['record', id], refetchType: 'all' }),
+          queryClient.invalidateQueries({ queryKey: ['records'], refetchType: 'all' }),
+          queryClient.invalidateQueries({ queryKey: ['tags'], refetchType: 'all' }),
+        ])
+      }
       router.push(`/records/${id}`)
       router.refresh()
     },

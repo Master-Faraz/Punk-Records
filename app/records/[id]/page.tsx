@@ -27,6 +27,9 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 
+import { getAuthenticatedUser } from '@/lib/offline/auth'
+import { enqueueMutation } from '@/lib/offline/outbox'
+
 export default function RecordDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const router = useRouter()
@@ -36,95 +39,165 @@ export default function RecordDetailPage({ params }: { params: Promise<{ id: str
   const { data: record, isLoading } = useQuery<RecordItem | null>({
     queryKey: ['record', id],
     queryFn: async () => {
-      const supabase = createClient()
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
+      const user = await getAuthenticatedUser()
       if (!user) return null
 
-      const { data, error } = await supabase
-        .from('records')
-        .select(`
-          *,
-          record_tags(
-            tag:tags(*)
-          )
-        `)
-        .eq('id', id)
-        .eq('user_id', user.id)
-        .single()
+      try {
+        const supabase = createClient()
+        const { data, error } = await supabase
+          .from('records')
+          .select(`
+            *,
+            record_tags(
+              tag:tags(*)
+            )
+          `)
+          .eq('id', id)
+          .eq('user_id', user.id)
+          .single()
 
-      if (error) throw error
-      return {
-        ...data,
-        tags: data.record_tags?.map((rt: any) => rt.tag).filter(Boolean) || [],
+        if (error) return null
+        return {
+          ...data,
+          tags: data.record_tags?.map((rt: any) => rt.tag).filter(Boolean) || [],
+        }
+      } catch {
+        return null
       }
     },
   })
 
   // Increment read_count once on mount
   useEffect(() => {
-    if (!record) return
+    if (!record || !navigator.onLine) return
     const incrementRead = async () => {
-      const supabase = createClient()
-      await supabase
-        .from('records')
-        .update({ read_count: (record.read_count || 0) + 1 })
-        .eq('id', record.id)
+      try {
+        const supabase = createClient()
+        await supabase
+          .from('records')
+          .update({ read_count: (record.read_count || 0) + 1 })
+          .eq('id', record.id)
+      } catch {}
     }
     incrementRead()
   }, [id, record])
 
-  // Review mutation
+  // Review mutation with offline support
   const reviewMutation = useMutation({
     mutationFn: async (result: 'remembered' | 'forgot') => {
       if (!record) return
-      const supabase = createClient()
       const currentStage = record.review_stage || 0
-
       const settings = await getUserSettings()
       const { nextStage, nextReviewAt } = computeNextReview(currentStage, result, settings)
       const nowIso = new Date().toISOString()
 
-      // 1. Record review history
-      await supabase.from('reviews').insert({
-        record_id: record.id,
-        user_id: record.user_id,
-        scheduled_for: record.next_review_at,
-        reviewed_at: nowIso,
+      const reviewPayload = {
+        recordId: record.id,
         result,
-        previous_stage: currentStage,
-        next_stage: nextStage,
-      })
+        scheduledFor: record.next_review_at,
+        previousStage: currentStage,
+        nextStage,
+        nextReviewAt,
+        reviewedAt: nowIso,
+      }
 
-      // 2. Update record
-      const { error } = await supabase
-        .from('records')
-        .update({
+      // Optimistic update
+      queryClient.setQueryData(['record', id], (old: RecordItem | null | undefined) => {
+        if (!old) return old
+        return {
+          ...old,
           review_stage: nextStage,
           last_reviewed_at: nowIso,
           next_review_at: nextReviewAt,
-        })
-        .eq('id', record.id)
+          read_count: (old.read_count || 0) + 1,
+        }
+      })
 
-      if (error) throw error
+      if (!navigator.onLine) {
+        await enqueueMutation('REVIEW_RECORD', reviewPayload)
+        return
+      }
+
+      try {
+        const supabase = createClient()
+        // 1. Record review history
+        await supabase.from('reviews').insert({
+          record_id: record.id,
+          user_id: record.user_id,
+          scheduled_for: record.next_review_at,
+          reviewed_at: nowIso,
+          result,
+          previous_stage: currentStage,
+          next_stage: nextStage,
+        })
+
+        // 2. Update record
+        const { error } = await supabase
+          .from('records')
+          .update({
+            review_stage: nextStage,
+            last_reviewed_at: nowIso,
+            next_review_at: nextReviewAt,
+            read_count: (record.read_count || 0) + 1,
+          })
+          .eq('id', record.id)
+
+        if (error) throw error
+      } catch (err: any) {
+        if (err?.name === 'TypeError' || String(err).includes('fetch') || !navigator.onLine) {
+          await enqueueMutation('REVIEW_RECORD', reviewPayload)
+          return
+        }
+        throw err
+      }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['record', id] })
-      queryClient.invalidateQueries({ queryKey: ['records'] })
-      queryClient.invalidateQueries({ queryKey: ['due-count'] })
+      if (navigator.onLine) {
+        queryClient.invalidateQueries({ queryKey: ['record', id] })
+        queryClient.invalidateQueries({ queryKey: ['records'] })
+        queryClient.invalidateQueries({ queryKey: ['due-count'] })
+      }
     },
   })
 
-  // Delete mutation with storage asset cleanup
+  // Delete mutation with storage asset cleanup & offline support
   const deleteMutation = useMutation({
     mutationFn: async () => {
       if (!record) return
-      await deleteRecordWithAssets(record)
+
+      // Optimistically remove from records cache
+      queryClient.setQueriesData({ queryKey: ['records'] }, (old: any) => {
+        return Array.isArray(old) ? old.filter((r) => r.id !== record.id) : []
+      })
+
+      if (!navigator.onLine) {
+        await enqueueMutation('DELETE_RECORD', {
+          recordId: record.id,
+          thumbnailUrl: record.thumbnail_url,
+          content: record.content,
+        })
+        return
+      }
+
+      try {
+        await deleteRecordWithAssets(record)
+      } catch (err: any) {
+        if (err?.name === 'TypeError' || String(err).includes('fetch') || !navigator.onLine) {
+          await enqueueMutation('DELETE_RECORD', {
+            recordId: record.id,
+            thumbnailUrl: record.thumbnail_url,
+            content: record.content,
+          })
+          return
+        }
+        throw err
+      }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['records'] })
-      queryClient.invalidateQueries({ queryKey: ['due-count'] })
+      if (navigator.onLine) {
+        queryClient.invalidateQueries({ queryKey: ['records'] })
+        queryClient.invalidateQueries({ queryKey: ['due-count'] })
+      }
       router.push('/')
     },
   })

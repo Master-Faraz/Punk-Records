@@ -6,6 +6,10 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { TagInput } from '@/components/tags/tag-input'
 
+import { getAuthenticatedUser } from '@/lib/offline/auth'
+import { enqueueMutation } from '@/lib/offline/outbox'
+import type { RecordItem } from '@/types/database'
+
 interface QuickCaptureModalProps {
   isOpen: boolean
   onClose: () => void
@@ -20,11 +24,7 @@ export function QuickCaptureModal({ isOpen, onClose }: QuickCaptureModalProps) {
 
   const createMutation = useMutation({
     mutationFn: async () => {
-      const supabase = createClient()
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-
+      const user = await getAuthenticatedUser()
       if (!user) throw new Error('User not authenticated')
 
       const cleanUrl = sourceUrl.trim()
@@ -42,41 +42,88 @@ export function QuickCaptureModal({ isOpen, onClose }: QuickCaptureModalProps) {
           })),
       }
 
-      // 1. Insert record
-      const { data: record, error: recordError } = await supabase
-        .from('records')
-        .insert({
-          user_id: user.id,
-          title: title.trim(),
-          content: tiptapJson.content.length > 0 ? tiptapJson : { type: 'doc', content: [{ type: 'paragraph' }] },
-          source_url: cleanUrl || null,
-          source_type: sourceType,
-          next_review_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-        })
-        .select()
-        .single()
+      const generatedId =
+        typeof crypto !== 'undefined' && crypto.randomUUID
+          ? crypto.randomUUID()
+          : `rec_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
 
-      if (recordError) throw recordError
-
-      // 2. Insert tags
-      if (tags.length > 0) {
-        for (const tagName of tags) {
-          const { data: tagData } = await supabase
-            .from('tags')
-            .upsert({ user_id: user.id, name: tagName }, { onConflict: 'user_id,name' })
-            .select()
-            .single()
-
-          if (tagData) {
-            await supabase.from('record_tags').insert({
-              record_id: record.id,
-              tag_id: tagData.id,
-            })
-          }
-        }
+      const newRecord: RecordItem = {
+        id: generatedId,
+        user_id: user.id,
+        title: title.trim(),
+        thumbnail_url: null,
+        content: tiptapJson.content.length > 0 ? tiptapJson : { type: 'doc', content: [{ type: 'paragraph' }] },
+        source_url: cleanUrl || null,
+        source_type: sourceType,
+        is_favorite: false,
+        is_archived: false,
+        read_count: 0,
+        review_stage: 0,
+        last_reviewed_at: null,
+        next_review_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        tags: tags.map((t) => ({ id: `temp_${t}`, user_id: user.id, name: t, created_at: new Date().toISOString() })),
       }
 
-      return record
+      // If offline, queue mutation directly and return optimistic record
+      if (!navigator.onLine) {
+        await enqueueMutation('CREATE_RECORD', { record: newRecord, tags })
+        queryClient.setQueriesData({ queryKey: ['records'] }, (old: any) => {
+          return Array.isArray(old) ? [newRecord, ...old] : [newRecord]
+        })
+        return newRecord
+      }
+
+      const supabase = createClient()
+      try {
+        // 1. Insert record
+        const { data: record, error: recordError } = await supabase
+          .from('records')
+          .insert({
+            id: newRecord.id,
+            user_id: user.id,
+            title: newRecord.title,
+            content: newRecord.content,
+            source_url: newRecord.source_url,
+            source_type: newRecord.source_type,
+            next_review_at: newRecord.next_review_at,
+          })
+          .select()
+          .single()
+
+        if (recordError) throw recordError
+
+        // 2. Insert tags
+        if (tags.length > 0) {
+          for (const tagName of tags) {
+            const { data: tagData } = await supabase
+              .from('tags')
+              .upsert({ user_id: user.id, name: tagName }, { onConflict: 'user_id,name' })
+              .select()
+              .single()
+
+            if (tagData) {
+              await supabase.from('record_tags').insert({
+                record_id: record.id,
+                tag_id: tagData.id,
+              })
+            }
+          }
+        }
+
+        return record
+      } catch (err: any) {
+        // If network error occurred, queue mutation for background sync
+        if (err?.name === 'TypeError' || String(err).includes('fetch') || !navigator.onLine) {
+          await enqueueMutation('CREATE_RECORD', { record: newRecord, tags })
+          queryClient.setQueriesData({ queryKey: ['records'] }, (old: any) => {
+            return Array.isArray(old) ? [newRecord, ...old] : [newRecord]
+          })
+          return newRecord
+        }
+        throw err
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['records'] })

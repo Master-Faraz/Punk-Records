@@ -26,6 +26,9 @@ import {
   LogIn,
 } from 'lucide-react'
 
+import { getAuthenticatedUser } from '@/lib/offline/auth'
+import { enqueueMutation } from '@/lib/offline/outbox'
+
 export default function SettingsPage() {
   const router = useRouter()
   const queryClient = useQueryClient()
@@ -34,10 +37,7 @@ export default function SettingsPage() {
   const { data: currentUser } = useQuery({
     queryKey: ['current-user'],
     queryFn: async () => {
-      const supabase = createClient()
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
+      const user = await getAuthenticatedUser()
       return user
     },
   })
@@ -65,13 +65,11 @@ export default function SettingsPage() {
   const { data: userSettings, isLoading: isLoadingSettings } = useQuery<UserSettings>({
     queryKey: ['user-settings'],
     queryFn: async () => {
-      const supabase = createClient()
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
+      const user = await getAuthenticatedUser()
       if (!user) return DEFAULT_USER_SETTINGS
 
       try {
+        const supabase = createClient()
         const { data, error } = await supabase
           .from('user_settings')
           .select('*')
@@ -79,13 +77,18 @@ export default function SettingsPage() {
           .maybeSingle()
 
         if (error || !data) {
-          // Check localStorage fallback
           const local = localStorage.getItem('punk_user_settings')
           if (local) return JSON.parse(local)
           return DEFAULT_USER_SETTINGS
         }
         return data
       } catch {
+        const local = typeof localStorage !== 'undefined' ? localStorage.getItem('punk_user_settings') : null
+        if (local) {
+          try {
+            return JSON.parse(local)
+          } catch {}
+        }
         return DEFAULT_USER_SETTINGS
       }
     },
@@ -101,13 +104,10 @@ export default function SettingsPage() {
     }
   }, [userSettings])
 
-  // Save Settings Mutation
+  // Save Settings Mutation with Offline Support
   const saveSettingsMutation = useMutation({
     mutationFn: async () => {
-      const supabase = createClient()
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
+      const user = await getAuthenticatedUser()
 
       const newSettings: UserSettings = {
         stage_1_days: Number(stage1Days) || 1,
@@ -119,15 +119,26 @@ export default function SettingsPage() {
       // Always save to localStorage immediately
       localStorage.setItem('punk_user_settings', JSON.stringify(newSettings))
 
+      if (!navigator.onLine) {
+        await enqueueMutation('UPDATE_SETTINGS', { settings: newSettings })
+        return newSettings
+      }
+
       if (user) {
         try {
-          await supabase.from('user_settings').upsert({
-            user_id: user.id,
-            ...newSettings,
-            updated_at: new Date().toISOString(),
-          })
-        } catch (err) {
-          console.warn('Database settings upsert error (using local storage):', err)
+          const supabase = createClient()
+          await supabase.from('user_settings').upsert(
+            {
+              user_id: user.id,
+              ...newSettings,
+            },
+            { onConflict: 'user_id' }
+          )
+        } catch (err: any) {
+          if (err?.name === 'TypeError' || String(err).includes('fetch') || !navigator.onLine) {
+            await enqueueMutation('UPDATE_SETTINGS', { settings: newSettings })
+            return newSettings
+          }
         }
       }
 
@@ -144,27 +155,29 @@ export default function SettingsPage() {
   const { data: allTags = [], isLoading: isLoadingTags } = useQuery<Tag[]>({
     queryKey: ['tags'],
     queryFn: async () => {
-      const supabase = createClient()
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
+      const user = await getAuthenticatedUser()
       if (!user) return []
 
-      const { data, error } = await supabase
-        .from('tags')
-        .select(`
-          *,
-          record_tags(count)
-        `)
-        .eq('user_id', user.id)
-        .order('name', { ascending: true })
+      try {
+        const supabase = createClient()
+        const { data, error } = await supabase
+          .from('tags')
+          .select(`
+            *,
+            record_tags(count)
+          `)
+          .eq('user_id', user.id)
+          .order('name', { ascending: true })
 
-      if (error) throw error
+        if (error) return []
 
-      return (data || []).map((t: any) => ({
-        ...t,
-        count: t.record_tags?.[0]?.count || 0,
-      }))
+        return (data || []).map((t: any) => ({
+          ...t,
+          count: t.record_tags?.[0]?.count || 0,
+        }))
+      } catch {
+        return []
+      }
     },
   })
 

@@ -12,6 +12,10 @@ import { processAndUploadPendingAssets } from '@/lib/supabase/asset-uploader'
 import { ArrowLeft, Save, Loader2, Link2, Sparkles, Image as ImageIcon, X } from 'lucide-react'
 import Link from 'next/link'
 
+import { getAuthenticatedUser } from '@/lib/offline/auth'
+import { enqueueMutation } from '@/lib/offline/outbox'
+import type { RecordItem } from '@/types/database'
+
 export default function NewRecordPage() {
   const router = useRouter()
   const queryClient = useQueryClient()
@@ -34,67 +38,114 @@ export default function NewRecordPage() {
 
   const saveMutation = useMutation({
     mutationFn: async () => {
-      const supabase = createClient()
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-
+      const user = await getAuthenticatedUser()
       if (!user) throw new Error('User not authenticated')
 
-      // 1. Upload any pending local blob images (thumbnail & Tiptap images)
-      const { finalThumbnailUrl, finalContent } = await processAndUploadPendingAssets({
-        thumbnailUrl,
-        content,
-      })
-
-      // 2. Auto-detect if source is youtube
       const cleanUrl = sourceUrl.trim()
       const isYoutube = cleanUrl.includes('youtube.com') || cleanUrl.includes('youtu.be')
       const sourceType = isYoutube ? 'youtube' : cleanUrl ? 'article' : 'note'
 
-      // 3. Insert record into database
-      const { data: record, error: recordError } = await supabase
-        .from('records')
-        .insert({
-          user_id: user.id,
-          title: title.trim(),
-          thumbnail_url: finalThumbnailUrl,
-          content: finalContent,
-          source_url: cleanUrl || null,
-          source_type: sourceType,
-          next_review_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-        })
-        .select()
-        .single()
+      const generatedId =
+        typeof crypto !== 'undefined' && crypto.randomUUID
+          ? crypto.randomUUID()
+          : `rec_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
 
-      if (recordError) throw recordError
+      const fallbackContent = content || { type: 'doc', content: [{ type: 'paragraph' }] }
 
-      // 4. Handle tags
-      if (tags.length > 0) {
-        for (const tagName of tags) {
-          const { data: tagData } = await supabase
-            .from('tags')
-            .upsert({ user_id: user.id, name: tagName }, { onConflict: 'user_id,name' })
-            .select()
-            .single()
-
-          if (tagData) {
-            await supabase.from('record_tags').insert({
-              record_id: record.id,
-              tag_id: tagData.id,
-            })
-          }
-        }
+      const newRecord: RecordItem = {
+        id: generatedId,
+        user_id: user.id,
+        title: title.trim(),
+        thumbnail_url: thumbnailUrl || null,
+        content: fallbackContent,
+        source_url: cleanUrl || null,
+        source_type: sourceType,
+        is_favorite: false,
+        is_archived: false,
+        read_count: 0,
+        review_stage: 0,
+        last_reviewed_at: null,
+        next_review_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        tags: tags.map((t) => ({ id: `temp_${t}`, user_id: user.id, name: t, created_at: new Date().toISOString() })),
       }
 
-      return record
+      // If offline, queue mutation directly
+      if (!navigator.onLine) {
+        await enqueueMutation('CREATE_RECORD', { record: newRecord, tags })
+        queryClient.setQueriesData({ queryKey: ['records'] }, (old: any) => {
+          return Array.isArray(old) ? [newRecord, ...old] : [newRecord]
+        })
+        queryClient.setQueryData(['record', generatedId], newRecord)
+        return newRecord
+      }
+
+      try {
+        // 1. Upload any pending local blob images (thumbnail & Tiptap images)
+        const { finalThumbnailUrl, finalContent } = await processAndUploadPendingAssets({
+          thumbnailUrl,
+          content,
+        })
+
+        const supabase = createClient()
+        // 2. Insert record into database
+        const { data: record, error: recordError } = await supabase
+          .from('records')
+          .insert({
+            id: generatedId,
+            user_id: user.id,
+            title: title.trim(),
+            thumbnail_url: finalThumbnailUrl,
+            content: finalContent,
+            source_url: cleanUrl || null,
+            source_type: sourceType,
+            next_review_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+          })
+          .select()
+          .single()
+
+        if (recordError) throw recordError
+
+        // 3. Handle tags
+        if (tags.length > 0) {
+          for (const tagName of tags) {
+            const { data: tagData } = await supabase
+              .from('tags')
+              .upsert({ user_id: user.id, name: tagName }, { onConflict: 'user_id,name' })
+              .select()
+              .single()
+
+            if (tagData) {
+              await supabase.from('record_tags').insert({
+                record_id: record.id,
+                tag_id: tagData.id,
+              })
+            }
+          }
+        }
+
+        return record
+      } catch (err: any) {
+        if (err?.name === 'TypeError' || String(err).includes('fetch') || !navigator.onLine) {
+          await enqueueMutation('CREATE_RECORD', { record: newRecord, tags })
+          queryClient.setQueriesData({ queryKey: ['records'] }, (old: any) => {
+            return Array.isArray(old) ? [newRecord, ...old] : [newRecord]
+          })
+          queryClient.setQueryData(['record', generatedId], newRecord)
+          return newRecord
+        }
+        throw err
+      }
     },
     onSuccess: async (record) => {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['records'], refetchType: 'all' }),
-        queryClient.invalidateQueries({ queryKey: ['tags'], refetchType: 'all' }),
-        queryClient.invalidateQueries({ queryKey: ['due-count'], refetchType: 'all' }),
-      ])
+      if (navigator.onLine) {
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: ['records'], refetchType: 'all' }),
+          queryClient.invalidateQueries({ queryKey: ['tags'], refetchType: 'all' }),
+          queryClient.invalidateQueries({ queryKey: ['due-count'], refetchType: 'all' }),
+        ])
+      }
       router.push(`/records/${record.id}`)
       router.refresh()
     },

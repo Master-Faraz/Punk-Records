@@ -26,6 +26,9 @@ import {
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
+import { getAuthenticatedUser } from '@/lib/offline/auth'
+import { enqueueMutation } from '@/lib/offline/outbox'
+
 export default function VaultPage() {
   const router = useRouter()
   const queryClient = useQueryClient()
@@ -38,20 +41,22 @@ export default function VaultPage() {
   const { data: allTags = [] } = useQuery<Tag[]>({
     queryKey: ['tags'],
     queryFn: async () => {
-      const supabase = createClient()
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
+      const user = await getAuthenticatedUser()
       if (!user) return []
 
-      const { data, error } = await supabase
-        .from('tags')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('name', { ascending: true })
+      try {
+        const supabase = createClient()
+        const { data, error } = await supabase
+          .from('tags')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('name', { ascending: true })
 
-      if (error) throw error
-      return data || []
+        if (error) return []
+        return data || []
+      } catch {
+        return []
+      }
     },
   })
 
@@ -59,55 +64,69 @@ export default function VaultPage() {
   const { data: records = [], isLoading } = useQuery<RecordItem[]>({
     queryKey: ['records', filterView, sortBy],
     queryFn: async () => {
-      const supabase = createClient()
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-
+      const user = await getAuthenticatedUser()
       if (!user) return []
 
-      let query = supabase
-        .from('records')
-        .select(`
-          *,
-          record_tags(
-            tag:tags(*)
-          )
-        `)
-        .eq('user_id', user.id)
-        .eq('is_archived', false)
+      try {
+        const supabase = createClient()
+        let query = supabase
+          .from('records')
+          .select(`
+            *,
+            record_tags(
+              tag:tags(*)
+            )
+          `)
+          .eq('user_id', user.id)
+          .eq('is_archived', false)
 
-      if (filterView === 'favorites') {
-        query = query.eq('is_favorite', true)
+        if (filterView === 'favorites') {
+          query = query.eq('is_favorite', true)
+        }
+
+        if (sortBy === 'newest') {
+          query = query.order('created_at', { ascending: false })
+        } else if (sortBy === 'read_count') {
+          query = query.order('read_count', { ascending: false })
+        } else if (sortBy === 'next_review') {
+          query = query.order('next_review_at', { ascending: true })
+        }
+
+        const { data, error } = await query
+        if (error) return []
+
+        return (data || []).map((r: any) => ({
+          ...r,
+          tags: r.record_tags?.map((rt: any) => rt.tag).filter(Boolean) || [],
+        }))
+      } catch {
+        return []
       }
-
-      if (sortBy === 'newest') {
-        query = query.order('created_at', { ascending: false })
-      } else if (sortBy === 'read_count') {
-        query = query.order('read_count', { ascending: false })
-      } else if (sortBy === 'next_review') {
-        query = query.order('next_review_at', { ascending: true })
-      }
-
-      const { data, error } = await query
-      if (error) throw error
-
-      return (data || []).map((r: any) => ({
-        ...r,
-        tags: r.record_tags?.map((rt: any) => rt.tag).filter(Boolean) || [],
-      }))
     },
   })
 
   // Optimistic Toggle Favorite Mutation
   const toggleFavoriteMutation = useMutation({
     mutationFn: async ({ id, is_favorite }: { id: string; is_favorite: boolean }) => {
-      const supabase = createClient()
-      const { error } = await supabase
-        .from('records')
-        .update({ is_favorite })
-        .eq('id', id)
-      if (error) throw error
+      if (!navigator.onLine) {
+        await enqueueMutation('TOGGLE_FAVORITE', { recordId: id, is_favorite })
+        return
+      }
+
+      try {
+        const supabase = createClient()
+        const { error } = await supabase
+          .from('records')
+          .update({ is_favorite })
+          .eq('id', id)
+        if (error) throw error
+      } catch (err: any) {
+        if (err?.name === 'TypeError' || String(err).includes('fetch') || !navigator.onLine) {
+          await enqueueMutation('TOGGLE_FAVORITE', { recordId: id, is_favorite })
+          return
+        }
+        throw err
+      }
     },
     onMutate: async ({ id, is_favorite }) => {
       await queryClient.cancelQueries({ queryKey: ['records'] })
@@ -126,18 +145,48 @@ export default function VaultPage() {
       }
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['records'] })
+      if (navigator.onLine) {
+        queryClient.invalidateQueries({ queryKey: ['records'] })
+      }
     },
   })
 
-  // Delete Record Mutation with Storage Cleanup
+  // Delete Record Mutation with Storage Cleanup & Offline Support
   const deleteMutation = useMutation({
     mutationFn: async (record: RecordItem) => {
-      await deleteRecordWithAssets(record)
+      // Optimistically remove from all record queries
+      queryClient.setQueriesData({ queryKey: ['records'] }, (old: any) => {
+        return Array.isArray(old) ? old.filter((r) => r.id !== record.id) : []
+      })
+
+      if (!navigator.onLine) {
+        await enqueueMutation('DELETE_RECORD', {
+          recordId: record.id,
+          thumbnailUrl: record.thumbnail_url,
+          content: record.content,
+        })
+        return
+      }
+
+      try {
+        await deleteRecordWithAssets(record)
+      } catch (err: any) {
+        if (err?.name === 'TypeError' || String(err).includes('fetch') || !navigator.onLine) {
+          await enqueueMutation('DELETE_RECORD', {
+            recordId: record.id,
+            thumbnailUrl: record.thumbnail_url,
+            content: record.content,
+          })
+          return
+        }
+        throw err
+      }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['records'] })
-      queryClient.invalidateQueries({ queryKey: ['due-count'] })
+      if (navigator.onLine) {
+        queryClient.invalidateQueries({ queryKey: ['records'] })
+        queryClient.invalidateQueries({ queryKey: ['due-count'] })
+      }
     },
   })
 
