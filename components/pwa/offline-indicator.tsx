@@ -1,42 +1,21 @@
 'use client'
 
-import { useState, useEffect, useSyncExternalStore } from 'react'
+import { useState, useEffect } from 'react'
 import { WifiOff, RefreshCw, CheckCircle2, CloudUpload } from 'lucide-react'
 import { getPendingCount } from '@/lib/offline/outbox'
 import { syncOutbox } from '@/lib/offline/sync'
 import { useQueryClient } from '@tanstack/react-query'
 
-const emptySubscribe = () => () => {}
-
-function subscribeOnline(callback: () => void) {
-  window.addEventListener('online', callback)
-  window.addEventListener('offline', callback)
-  return () => {
-    window.removeEventListener('online', callback)
-    window.removeEventListener('offline', callback)
-  }
-}
-
 export function OfflineIndicator() {
   const queryClient = useQueryClient()
-  const hasMounted = useSyncExternalStore(
-    emptySubscribe,
-    () => true,
-    () => false
+  const [isOnline, setIsOnline] = useState(() =>
+    typeof navigator !== 'undefined' ? navigator.onLine : true
   )
-  const isOnline = useSyncExternalStore(
-    subscribeOnline,
-    () => navigator.onLine,
-    () => true
-  )
-
   const [pendingCount, setPendingCount] = useState(0)
   const [isSyncing, setIsSyncing] = useState(false)
   const [showSyncedBanner, setShowSyncedBanner] = useState(false)
 
   useEffect(() => {
-    if (typeof window === 'undefined') return
-
     const updateCount = async () => {
       try {
         const count = await getPendingCount()
@@ -44,7 +23,15 @@ export function OfflineIndicator() {
       } catch {}
     }
 
-    updateCount()
+    const handleOnline = () => {
+      setIsOnline(true)
+      updateCount()
+    }
+
+    const handleOffline = () => {
+      setIsOnline(false)
+      updateCount()
+    }
 
     const handleOutboxChange = () => {
       updateCount()
@@ -62,12 +49,16 @@ export function OfflineIndicator() {
       }
     }
 
-    window.addEventListener('online', updateCount)
+    updateCount()
+
+    window.addEventListener('online', handleOnline)
+    window.addEventListener('offline', handleOffline)
     window.addEventListener('punk-outbox-changed', handleOutboxChange)
     window.addEventListener('punk-sync-state', handleSyncState)
 
     return () => {
-      window.removeEventListener('online', updateCount)
+      window.removeEventListener('online', handleOnline)
+      window.removeEventListener('offline', handleOffline)
       window.removeEventListener('punk-outbox-changed', handleOutboxChange)
       window.removeEventListener('punk-sync-state', handleSyncState)
     }
@@ -78,15 +69,15 @@ export function OfflineIndicator() {
     await syncOutbox(queryClient)
   }
 
-  // Hide completely before mount or when online and no pending sync or banner
-  if (!hasMounted || (isOnline && pendingCount === 0 && !isSyncing && !showSyncedBanner)) {
+  // Hide when online and no pending sync or banner
+  if (isOnline && pendingCount === 0 && !isSyncing && !showSyncedBanner) {
     return null
   }
 
   return (
     <aside
       aria-label="Network and synchronization status"
-      className="fixed bottom-20 md:bottom-6 right-4 z-40 flex items-center gap-2 rounded-full border border-zinc-800/90 bg-zinc-900/95 px-3.5 py-1.5 text-xs shadow-2xl backdrop-blur-md animate-in fade-in slide-in-from-bottom-2 duration-200"
+      className="fixed bottom-20 md:bottom-6 right-4 z-50 flex items-center gap-2 rounded-full border border-zinc-800/90 bg-zinc-900/95 px-3.5 py-1.5 text-xs shadow-2xl backdrop-blur-md animate-in fade-in slide-in-from-bottom-2 duration-200 pointer-events-auto select-none"
     >
       {!isOnline ? (
         <div className="flex items-center gap-2 text-amber-400">
@@ -113,7 +104,7 @@ export function OfflineIndicator() {
           <span>{pendingCount} unsynced</span>
           <button
             onClick={handleManualSync}
-            className="ml-1 rounded-md bg-zinc-800 px-2 py-0.5 font-semibold text-zinc-100 hover:bg-zinc-700 transition-colors"
+            className="ml-1 rounded-md bg-zinc-800 px-2 py-0.5 font-semibold text-zinc-100 hover:bg-zinc-700 transition-colors cursor-pointer"
           >
             Sync now
           </button>

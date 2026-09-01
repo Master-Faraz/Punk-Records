@@ -9,8 +9,13 @@ import { QuickCaptureModal } from '../capture/quick-capture-modal'
 import { useQuery } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { getAuthenticatedUser } from '@/lib/offline/auth'
-import { OfflineIndicator } from '@/components/pwa/offline-indicator'
+import dynamic from 'next/dynamic'
 import { Plus } from 'lucide-react'
+
+const OfflineIndicator = dynamic(
+  () => import('@/components/pwa/offline-indicator').then((mod) => mod.OfflineIndicator),
+  { ssr: false }
+)
 
 export function AppShell({ children }: { children: ReactNode }) {
   const [isQuickCaptureOpen, setIsQuickCaptureOpen] = useState(false)

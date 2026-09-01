@@ -7,13 +7,6 @@ export function ServiceWorkerRegister() {
   useEffect(() => {
     if (typeof window === 'undefined' || !('serviceWorker' in navigator)) return
 
-    const shouldRegister =
-      process.env.NODE_ENV === 'production' ||
-      process.env.NEXT_PUBLIC_ENABLE_SW_DEV === 'true' ||
-      window.location.search.includes('sw=1')
-
-    if (!shouldRegister) return
-
     navigator.serviceWorker
       .register('/sw.js')
       .then((registration) => {

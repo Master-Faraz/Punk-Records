@@ -62,11 +62,13 @@ self.addEventListener('fetch', (event) => {
 
   const url = new URL(event.request.url)
 
-  // Security: Never cache Supabase Auth endpoints or upload APIs
+  // Security & Dev: Never cache Supabase Auth endpoints, upload APIs, or dev HMR sockets
   if (
     url.pathname.includes('/auth/v1') ||
     url.pathname.startsWith('/api/upload') ||
-    url.pathname.startsWith('/auth/callback')
+    url.pathname.startsWith('/auth/callback') ||
+    url.pathname.includes('webpack-hmr') ||
+    url.pathname.includes('__turbopack__')
   ) {
     return
   }
@@ -83,11 +85,11 @@ self.addEventListener('fetch', (event) => {
           return networkResponse
         })
         .catch(async () => {
-          const cachedPage = await caches.match(event.request)
+          const cachedPage = await caches.match(event.request, { ignoreSearch: true })
           if (cachedPage) return cachedPage
 
           // Fallback to cached root app shell
-          const appShell = await caches.match('/')
+          const appShell = await caches.match('/', { ignoreSearch: true })
           if (appShell) return appShell
 
           return new Response('Offline — Punk Records', {
@@ -113,7 +115,7 @@ self.addEventListener('fetch', (event) => {
 
   if (isStaticAsset) {
     event.respondWith(
-      caches.match(event.request).then((cachedResponse) => {
+      caches.match(event.request, { ignoreSearch: true }).then((cachedResponse) => {
         if (cachedResponse) return cachedResponse
 
         return fetch(event.request).then((networkResponse) => {
@@ -140,7 +142,7 @@ self.addEventListener('fetch', (event) => {
           }
           return networkResponse
         })
-        .catch(() => caches.match(event.request))
+        .catch(() => caches.match(event.request, { ignoreSearch: true }))
     )
     return
   }
