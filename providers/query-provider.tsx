@@ -16,6 +16,7 @@ export function QueryProvider({ children }: { children: ReactNode }) {
             staleTime: 1000 * 60 * 5, // 5 minutes fresh
             refetchOnMount: false,
             refetchOnWindowFocus: true,
+            refetchOnReconnect: false,
             retry: 1,
           },
           mutations: {
@@ -39,15 +40,16 @@ export function QueryProvider({ children }: { children: ReactNode }) {
       syncOutbox(queryClient)
     }
 
-    // 3. Network reconnect listener
-    const handleOnline = () => {
-      syncOutbox(queryClient)
+    // 3. Network reconnect listener: sync outbox first, then refresh queries
+    const handleOnline = async () => {
+      await syncOutbox(queryClient)
+      await queryClient.invalidateQueries()
     }
 
     // 4. Tab visibility change (e.g. unlocking phone or switching back to app)
-    const handleVisibilityChange = () => {
+    const handleVisibilityChange = async () => {
       if (document.visibilityState === 'visible' && navigator.onLine) {
-        syncOutbox(queryClient)
+        await syncOutbox(queryClient)
       }
     }
 

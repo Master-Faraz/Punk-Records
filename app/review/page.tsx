@@ -70,12 +70,16 @@ export default function ReviewPage() {
           .lte('next_review_at', nowIso)
           .order('next_review_at', { ascending: true })
 
-        if (error) return []
+        if (error) {
+          if (!navigator.onLine || error.message.includes('fetch')) throw error
+          return []
+        }
         return (data || []).map((r: any) => ({
           ...r,
           tags: r.record_tags?.map((rt: any) => rt.tag).filter(Boolean) || [],
         }))
-      } catch {
+      } catch (err) {
+        if (!navigator.onLine) throw err
         return []
       }
     },

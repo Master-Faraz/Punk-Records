@@ -46,9 +46,13 @@ export function AppShell({ children }: { children: ReactNode }) {
           .eq('is_archived', false)
           .lte('next_review_at', nowIso)
 
-        if (error) return 0
+        if (error) {
+          if (!navigator.onLine || error.message.includes('fetch')) throw error
+          return 0
+        }
         return count ?? 0
-      } catch {
+      } catch (err) {
+        if (!navigator.onLine) throw err
         return 0
       }
     },

@@ -136,25 +136,47 @@ async function executeMutation(supabase: ReturnType<typeof createClient>, userId
         record: RecordItem
         tags?: string[]
       }
+
+      // Strip joined or temporary fields (like 'tags') that do not exist on the records table
+      const raw = record as unknown as Record<string, unknown>
+      const dbRecord = {
+        id: raw.id as string,
+        user_id: userId,
+        title: raw.title as string,
+        thumbnail_url: (raw.thumbnail_url as string) || null,
+        content: raw.content || {},
+        source_url: (raw.source_url as string) || null,
+        source_type: (raw.source_type as string) || 'note',
+        is_favorite: Boolean(raw.is_favorite),
+        is_archived: Boolean(raw.is_archived),
+        read_count: typeof raw.read_count === 'number' ? raw.read_count : 0,
+        review_stage: typeof raw.review_stage === 'number' ? raw.review_stage : 0,
+        last_reviewed_at: (raw.last_reviewed_at as string) || null,
+        next_review_at: (raw.next_review_at as string) || new Date().toISOString(),
+        created_at: (raw.created_at as string) || new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }
+
       // 1. Insert record (upsert by ID for idempotency)
       const { error: recordError } = await supabase
         .from('records')
-        .upsert(
-          {
-            ...record,
-            user_id: userId,
-          },
-          { onConflict: 'id' }
-        )
+        .upsert(dbRecord, { onConflict: 'id' })
 
-      if (recordError) throw recordError
+      if (recordError) {
+        console.error('[Sync] Error upserting record to Supabase:', recordError)
+        throw recordError
+      }
 
       // 2. Insert tags if specified
       if (Array.isArray(tags) && tags.length > 0) {
         for (const tagName of tags) {
+          if (!tagName || typeof tagName !== 'string') continue
+          const trimmedName = tagName.trim()
+          if (!trimmedName) continue
+
           const { data: tagData, error: tagError } = await supabase
             .from('tags')
-            .upsert({ user_id: userId, name: tagName }, { onConflict: 'user_id,name' })
+            .upsert({ user_id: userId, name: trimmedName }, { onConflict: 'user_id,name' })
             .select()
             .single()
 
@@ -162,8 +184,8 @@ async function executeMutation(supabase: ReturnType<typeof createClient>, userId
             await supabase
               .from('record_tags')
               .upsert(
-                { record_id: record.id, tag_id: tagData.id },
-                { onConflict: 'record_id,tag_id' }
+                { record_id: dbRecord.id, tag_id: tagData.id },
+                { onConflict: 'record_id,tag_id', ignoreDuplicates: true }
               )
           }
         }
@@ -177,16 +199,26 @@ async function executeMutation(supabase: ReturnType<typeof createClient>, userId
         updates: Partial<RecordItem>
         tags?: string[]
       }
+
+      // Strip joined or protected fields
+      const rawUpdates = { ...(updates as Record<string, unknown>) }
+      delete rawUpdates.tags
+      delete rawUpdates.id
+      delete rawUpdates.user_id
+
       const { error } = await supabase
         .from('records')
         .update({
-          ...updates,
+          ...rawUpdates,
           updated_at: new Date().toISOString(),
         })
         .eq('id', recordId)
         .eq('user_id', userId)
 
-      if (error) throw error
+      if (error) {
+        console.error('[Sync] Error updating record in Supabase:', error)
+        throw error
+      }
 
       // If tags are provided, reconcile record_tags
       if (Array.isArray(tags)) {
@@ -194,16 +226,23 @@ async function executeMutation(supabase: ReturnType<typeof createClient>, userId
         await supabase.from('record_tags').delete().eq('record_id', recordId)
 
         for (const tagName of tags) {
+          if (!tagName || typeof tagName !== 'string') continue
+          const trimmedName = tagName.trim()
+          if (!trimmedName) continue
+
           const { data: tagData } = await supabase
             .from('tags')
-            .upsert({ user_id: userId, name: tagName }, { onConflict: 'user_id,name' })
+            .upsert({ user_id: userId, name: trimmedName }, { onConflict: 'user_id,name' })
             .select()
             .single()
 
           if (tagData) {
             await supabase
               .from('record_tags')
-              .insert({ record_id: recordId, tag_id: tagData.id })
+              .upsert(
+                { record_id: recordId, tag_id: tagData.id },
+                { onConflict: 'record_id,tag_id', ignoreDuplicates: true }
+              )
           }
         }
       }

@@ -56,12 +56,16 @@ export default function RecordDetailPage({ params }: { params: Promise<{ id: str
           .eq('user_id', user.id)
           .single()
 
-        if (error) return null
+        if (error) {
+          if (!navigator.onLine || error.message.includes('fetch')) throw error
+          return null
+        }
         return {
           ...data,
           tags: data.record_tags?.map((rt: any) => rt.tag).filter(Boolean) || [],
         }
-      } catch {
+      } catch (err) {
+        if (!navigator.onLine) throw err
         return null
       }
     },

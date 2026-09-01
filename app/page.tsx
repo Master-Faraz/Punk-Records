@@ -52,9 +52,13 @@ export default function VaultPage() {
           .eq('user_id', user.id)
           .order('name', { ascending: true })
 
-        if (error) return []
+        if (error) {
+          if (!navigator.onLine || error.message.includes('fetch')) throw error
+          return []
+        }
         return data || []
-      } catch {
+      } catch (err) {
+        if (!navigator.onLine) throw err
         return []
       }
     },
@@ -93,13 +97,17 @@ export default function VaultPage() {
         }
 
         const { data, error } = await query
-        if (error) return []
+        if (error) {
+          if (!navigator.onLine || error.message.includes('fetch')) throw error
+          return []
+        }
 
         return (data || []).map((r: any) => ({
           ...r,
           tags: r.record_tags?.map((rt: any) => rt.tag).filter(Boolean) || [],
         }))
-      } catch {
+      } catch (err) {
+        if (!navigator.onLine) throw err
         return []
       }
     },
