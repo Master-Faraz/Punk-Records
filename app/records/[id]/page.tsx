@@ -36,11 +36,11 @@ export default function RecordDetailPage({ params }: { params: Promise<{ id: str
   const queryClient = useQueryClient()
 
   // Fetch record with instant fallback to vault records cache
-  const { data: record, isLoading } = useQuery<RecordItem | null>({
+  const { data: record, isLoading, isPending } = useQuery<RecordItem | null>({
     queryKey: ['record', id],
     initialData: () => {
       const cachedRecords = queryClient.getQueryData<RecordItem[]>(['records'])
-      return cachedRecords?.find((r) => r.id === id) || null
+      return cachedRecords?.find((r) => r.id === id)
     },
     queryFn: async () => {
       const user = await getAuthenticatedUser()
@@ -210,7 +210,7 @@ export default function RecordDetailPage({ params }: { params: Promise<{ id: str
     },
   })
 
-  if (isLoading) {
+  if (isPending || isLoading) {
     return (
       <AppShell>
         <div className="flex flex-col items-center justify-center py-24 text-zinc-500">

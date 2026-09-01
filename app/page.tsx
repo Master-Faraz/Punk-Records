@@ -40,15 +40,6 @@ export default function VaultPage() {
   // Fetch all user tags for tag filtering
   const { data: allTags = [] } = useQuery<Tag[]>({
     queryKey: ['tags'],
-    initialData: () => {
-      if (typeof window !== 'undefined') {
-        try {
-          const saved = localStorage.getItem('punk_cached_tags')
-          if (saved) return JSON.parse(saved)
-        } catch {}
-      }
-      return undefined
-    },
     queryFn: async () => {
       const user = await getAuthenticatedUser()
       if (!user) {
@@ -68,11 +59,7 @@ export default function VaultPage() {
           if (!navigator.onLine || error.message.includes('fetch')) throw error
           return []
         }
-        const result = data || []
-        try {
-          localStorage.setItem('punk_cached_tags', JSON.stringify(result))
-        } catch {}
-        return result
+        return data || []
       } catch (err) {
         if (!navigator.onLine) throw err
         return []
@@ -81,17 +68,8 @@ export default function VaultPage() {
   })
 
   // Fetch all records with joined tags (unified single cache key for offline resilience)
-  const { data: records = [], isLoading } = useQuery<RecordItem[]>({
+  const { data: records = [], isLoading, isPending } = useQuery<RecordItem[]>({
     queryKey: ['records'],
-    initialData: () => {
-      if (typeof window !== 'undefined') {
-        try {
-          const saved = localStorage.getItem('punk_cached_records')
-          if (saved) return JSON.parse(saved)
-        } catch {}
-      }
-      return undefined
-    },
     queryFn: async () => {
       const user = await getAuthenticatedUser()
       if (!user) {
@@ -118,16 +96,10 @@ export default function VaultPage() {
           return []
         }
 
-        const mapped = (data || []).map((r: any) => ({
+        return (data || []).map((r: any) => ({
           ...r,
           tags: r.record_tags?.map((rt: any) => rt.tag).filter(Boolean) || [],
         }))
-
-        try {
-          localStorage.setItem('punk_cached_records', JSON.stringify(mapped))
-        } catch {}
-
-        return mapped
       } catch (err) {
         if (!navigator.onLine) throw err
         return []
@@ -371,7 +343,7 @@ export default function VaultPage() {
         </div>
 
         {/* Records Grid */}
-        {isLoading ? (
+        {isPending || isLoading ? (
           <div className="flex flex-col items-center justify-center py-24 text-zinc-500">
             <Loader2 className="h-6 w-6 animate-spin text-zinc-400" />
             <span className="mt-2 text-xs">Loading vault...</span>
