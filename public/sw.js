@@ -102,24 +102,30 @@ self.addEventListener('fetch', (event) => {
     return
   }
 
-  // B. Next.js Static Assets & Fonts — Cache first, update in background
-  const isStaticAsset =
+  // B. Next.js Static Assets, Fonts & Media (including Next Image & Supabase storage images)
+  const isStaticOrMedia =
     url.pathname.startsWith('/_next/static/') ||
+    url.pathname.startsWith('/_next/image') ||
     url.pathname.startsWith('/fonts/') ||
     url.pathname.startsWith('/icons/') ||
     url.pathname.startsWith('/images/') ||
+    url.pathname.includes('/storage/v1/object/public/') ||
+    (url.hostname.includes('supabase.co') && url.pathname.includes('/storage/')) ||
     url.pathname.endsWith('.woff2') ||
     url.pathname.endsWith('.png') ||
+    url.pathname.endsWith('.jpg') ||
+    url.pathname.endsWith('.jpeg') ||
+    url.pathname.endsWith('.webp') ||
     url.pathname.endsWith('.svg') ||
     url.pathname.endsWith('.ico')
 
-  if (isStaticAsset) {
+  if (isStaticOrMedia) {
     event.respondWith(
       caches.match(event.request, { ignoreSearch: true }).then((cachedResponse) => {
         if (cachedResponse) return cachedResponse
 
         return fetch(event.request).then((networkResponse) => {
-          if (networkResponse && networkResponse.status === 200) {
+          if (networkResponse && (networkResponse.status === 200 || networkResponse.type === 'opaque')) {
             const copy = networkResponse.clone()
             caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy))
           }

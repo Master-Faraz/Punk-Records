@@ -35,9 +35,13 @@ export default function RecordDetailPage({ params }: { params: Promise<{ id: str
   const router = useRouter()
   const queryClient = useQueryClient()
 
-  // Fetch record
+  // Fetch record with instant fallback to vault records cache
   const { data: record, isLoading } = useQuery<RecordItem | null>({
     queryKey: ['record', id],
+    initialData: () => {
+      const cachedRecords = queryClient.getQueryData<RecordItem[]>(['records'])
+      return cachedRecords?.find((r) => r.id === id) || null
+    },
     queryFn: async () => {
       const user = await getAuthenticatedUser()
       if (!user) return null

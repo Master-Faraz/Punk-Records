@@ -30,9 +30,13 @@ export default function EditRecordPage({ params }: { params: Promise<{ id: strin
   const [tags, setTags] = useState<string[]>([])
   const [isLoaded, setIsLoaded] = useState(false)
 
-  // Fetch current record
+  // Fetch existing record with instant fallback to vault records cache
   const { data: record, isLoading } = useQuery<RecordItem | null>({
     queryKey: ['record', id],
+    initialData: () => {
+      const cachedRecords = queryClient.getQueryData<RecordItem[]>(['records'])
+      return cachedRecords?.find((r) => r.id === id) || null
+    },
     queryFn: async () => {
       const user = await getAuthenticatedUser()
       if (!user) return null
@@ -51,12 +55,16 @@ export default function EditRecordPage({ params }: { params: Promise<{ id: strin
           .eq('user_id', user.id)
           .single()
 
-        if (error) return null
+        if (error) {
+          if (!navigator.onLine || error.message.includes('fetch')) throw error
+          return null
+        }
         return {
           ...data,
           tags: data.record_tags?.map((rt: any) => rt.tag).filter(Boolean) || [],
         }
-      } catch {
+      } catch (err) {
+        if (!navigator.onLine) throw err
         return null
       }
     },

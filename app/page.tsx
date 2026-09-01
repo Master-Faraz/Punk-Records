@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import Image from 'next/image'
 import { AppShell } from '@/components/layout/app-shell'
 import { deleteRecordWithAssets } from '@/lib/supabase/cleanup'
@@ -64,16 +64,16 @@ export default function VaultPage() {
     },
   })
 
-  // Fetch all records with joined tags
+  // Fetch all records with joined tags (unified single cache key for offline resilience)
   const { data: records = [], isLoading } = useQuery<RecordItem[]>({
-    queryKey: ['records', filterView, sortBy],
+    queryKey: ['records'],
     queryFn: async () => {
       const user = await getAuthenticatedUser()
       if (!user) return []
 
       try {
         const supabase = createClient()
-        let query = supabase
+        const { data, error } = await supabase
           .from('records')
           .select(`
             *,
@@ -83,20 +83,8 @@ export default function VaultPage() {
           `)
           .eq('user_id', user.id)
           .eq('is_archived', false)
+          .order('created_at', { ascending: false })
 
-        if (filterView === 'favorites') {
-          query = query.eq('is_favorite', true)
-        }
-
-        if (sortBy === 'newest') {
-          query = query.order('created_at', { ascending: false })
-        } else if (sortBy === 'read_count') {
-          query = query.order('read_count', { ascending: false })
-        } else if (sortBy === 'next_review') {
-          query = query.order('next_review_at', { ascending: true })
-        }
-
-        const { data, error } = await query
         if (error) {
           if (!navigator.onLine || error.message.includes('fetch')) throw error
           return []
@@ -138,10 +126,10 @@ export default function VaultPage() {
     },
     onMutate: async ({ id, is_favorite }) => {
       await queryClient.cancelQueries({ queryKey: ['records'] })
-      const previousRecords = queryClient.getQueryData<RecordItem[]>(['records', filterView, sortBy])
+      const previousRecords = queryClient.getQueryData<RecordItem[]>(['records'])
       if (previousRecords) {
         queryClient.setQueryData<RecordItem[]>(
-          ['records', filterView, sortBy],
+          ['records'],
           previousRecords.map((r) => (r.id === id ? { ...r, is_favorite } : r))
         )
       }
@@ -149,7 +137,7 @@ export default function VaultPage() {
     },
     onError: (_err, _vars, context) => {
       if (context?.previousRecords) {
-        queryClient.setQueryData(['records', filterView, sortBy], context.previousRecords)
+        queryClient.setQueryData(['records'], context.previousRecords)
       }
     },
     onSettled: () => {
@@ -198,23 +186,37 @@ export default function VaultPage() {
     },
   })
 
-  // Filter records by search (STRICTLY title only) AND tag filter
-  const filteredRecords = records.filter((r) => {
-    // 1. Tag filter
-    if (selectedTag !== 'all') {
-      const hasTag = r.tags?.some((t) => t.id === selectedTag)
-      if (!hasTag) return false
+  // Filter and sort records on client (instantly available offline with zero network calls)
+  const filteredRecords = useMemo(() => {
+    let result = [...records]
+
+    // 1. View filter (all vs favorites)
+    if (filterView === 'favorites') {
+      result = result.filter((r) => r.is_favorite)
     }
 
-    // 2. Search query filter (strictly title only)
+    // 2. Tag filter
+    if (selectedTag !== 'all') {
+      result = result.filter((r) => r.tags?.some((t) => t.id === selectedTag))
+    }
+
+    // 3. Search query filter (strictly title only)
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase()
-      const matchTitle = r.title.toLowerCase().includes(q)
-      if (!matchTitle) return false
+      result = result.filter((r) => r.title.toLowerCase().includes(q))
     }
 
-    return true
-  })
+    // 4. Sorting
+    if (sortBy === 'newest') {
+      result.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    } else if (sortBy === 'read_count') {
+      result.sort((a, b) => (b.read_count || 0) - (a.read_count || 0))
+    } else if (sortBy === 'next_review') {
+      result.sort((a, b) => new Date(a.next_review_at || 0).getTime() - new Date(b.next_review_at || 0).getTime())
+    }
+
+    return result
+  }, [records, filterView, selectedTag, searchQuery, sortBy])
 
   return (
     <AppShell>
