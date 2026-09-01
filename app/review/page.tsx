@@ -234,26 +234,37 @@ export default function ReviewPage() {
       <section className="flex flex-col gap-6 max-w-2xl mx-auto py-2">
         {/* Header with Queue Progress */}
         <header className="flex flex-col gap-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-red-500/10 text-red-500 ring-1 ring-red-500/30 shadow-lg shadow-red-950/30">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-red-500/10 text-red-500 ring-1 ring-red-500/30 shadow-lg shadow-red-950/30">
                 <Brain className="h-5 w-5" />
               </div>
-              <div>
+              <div className="min-w-0">
                 <h1 className="text-lg sm:text-xl font-bold tracking-tight text-white flex items-center gap-2">
-                  <span>Review Mode</span>
-                  <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded-md bg-zinc-800/80 border border-zinc-700/50 text-zinc-400 font-normal">
+                  <span className="truncate">Review Mode</span>
+                  <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded-md bg-zinc-800/80 border border-zinc-700/50 text-zinc-400 font-normal shrink-0">
                     SRS
                   </span>
                 </h1>
-                <p className="text-xs text-zinc-400">Spaced repetition interval queue (1d → 7d → 30d)</p>
+                <p className="text-xs text-zinc-400 truncate sm:whitespace-normal">
+                  Spaced repetition interval queue (1d → 7d → 30d)
+                </p>
               </div>
             </div>
 
             {totalDueCount > 0 && (
-              <div className="flex items-center gap-2">
-                <span className="rounded-full bg-red-500/15 border border-red-500/30 px-3 py-1 text-xs font-bold text-red-400 font-mono shadow-sm">
-                  {completedInSession + 1} of {activeSessionTarget}
+              <div className="shrink-0 flex flex-col items-end justify-center pl-2">
+                <div className="flex items-baseline gap-1.5 font-mono">
+                  <span className="text-2xl sm:text-3xl font-black tracking-tight text-white tabular-nums">
+                    {String(completedInSession + 1).padStart(2, '0')}
+                  </span>
+                  <span className="text-sm text-zinc-600 font-light select-none">/</span>
+                  <span className="text-sm font-semibold text-zinc-500 tabular-nums">
+                    {String(activeSessionTarget).padStart(2, '0')}
+                  </span>
+                </div>
+                <span className="text-[9px] sm:text-[10px] font-mono uppercase tracking-widest text-zinc-500 -mt-0.5">
+                  Queue
                 </span>
               </div>
             )}
