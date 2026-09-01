@@ -43,6 +43,7 @@ export function TiptapRenderer({ content }: TiptapRendererProps) {
     extensions: [
       StarterKit.configure({
         link: false,
+        underline: false,
         heading: {
           levels: [1, 2, 3],
         },

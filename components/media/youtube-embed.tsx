@@ -37,7 +37,7 @@ export function YouTubeEmbed({ url, title = 'YouTube video' }: YouTubeEmbedProps
         className="absolute inset-0 h-full w-full"
         src={`https://www.youtube-nocookie.com/embed/${videoId}`}
         title={title}
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
         allowFullScreen
         loading="lazy"
       />
