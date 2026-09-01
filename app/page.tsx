@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Image from 'next/image'
 import { AppShell } from '@/components/layout/app-shell'
 import { deleteRecordWithAssets } from '@/lib/supabase/cleanup'
+import { getYouTubeVideoId } from '@/components/media/youtube-embed'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import type { RecordItem, Tag } from '@/types/database'
@@ -306,22 +307,23 @@ export default function VaultPage() {
                 >
                   {/* Optional Card Thumbnail Banner */}
                   {record.thumbnail_url && (
-                    <div className="relative h-40 w-full block overflow-hidden bg-zinc-950 border-b border-zinc-800/80">
+                    <div className="relative h-44 w-full block overflow-hidden bg-zinc-950">
                       <Image
                         src={record.thumbnail_url}
                         alt={record.title}
                         fill
                         sizes="(max-width: 768px) 100vw, 400px"
-                        className="object-cover group-hover:scale-105 transition-transform duration-300"
+                        className="object-cover group-hover:scale-105 transition-transform duration-500"
                         priority={index < 2}
                         loading={index < 2 ? 'eager' : 'lazy'}
                       />
+                      <div className="absolute inset-0 bg-gradient-to-t from-[#101214] via-transparent to-transparent" />
                     </div>
                   )}
 
                   <div className="p-5 flex-1 flex flex-col justify-between">
                     <div>
-                      {/* Top Row: Star & Delete */}
+                      {/* Top Row: Tags, Star & Delete */}
                       <div className="flex items-center justify-between gap-2 mb-2.5">
                         <div className="flex items-center gap-1.5 flex-wrap">
                           {record.tags && record.tags.map((tag) => (
@@ -332,14 +334,28 @@ export default function VaultPage() {
                                 e.stopPropagation()
                                 setSelectedTag(tag.id)
                               }}
-                              className="rounded-md bg-zinc-800/60 px-2 py-0.5 text-[10px] font-medium text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 transition-colors"
+                              className="rounded-md bg-zinc-800/80 border border-white/[0.04] px-2 py-0.5 text-[10px] font-medium text-zinc-300 hover:text-white hover:bg-zinc-700/80 transition-colors font-mono"
                             >
                               #{tag.name}
                             </button>
                           ))}
                         </div>
 
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-1 -mr-1.5">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              if (confirm('Delete this record and its uploaded images?')) {
+                                deleteMutation.mutate(record)
+                              }
+                            }}
+                            className="opacity-0 group-hover:opacity-100 rounded-lg p-1.5 text-zinc-500 hover:text-red-400 transition-all"
+                            title="Delete Record"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+
                           <button
                             type="button"
                             onClick={(e) => {
@@ -352,36 +368,22 @@ export default function VaultPage() {
                             className={`rounded-lg p-1.5 transition-colors ${
                               record.is_favorite
                                 ? 'text-red-500 hover:text-red-400'
-                                : 'text-zinc-600 hover:text-zinc-400'
+                                : 'text-zinc-500 hover:text-zinc-300'
                             }`}
                             title="Toggle Star"
                           >
                             <Star className={`h-4 w-4 ${record.is_favorite ? 'fill-red-500 text-red-500' : ''}`} />
                           </button>
-
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              if (confirm('Delete this record and its uploaded images?')) {
-                                deleteMutation.mutate(record)
-                              }
-                            }}
-                            className="opacity-0 group-hover:opacity-100 rounded-lg p-1.5 text-zinc-600 hover:text-red-400 transition-all"
-                            title="Delete Record"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
                         </div>
                       </div>
 
                       {/* Record Title */}
-                      <h3 className="text-base font-semibold tracking-tight text-zinc-100 group-hover:text-white transition-colors line-clamp-2">
+                      <h3 className="text-base font-bold tracking-tight text-white group-hover:text-zinc-100 transition-colors line-clamp-2 leading-snug">
                         {record.title}
                       </h3>
 
-                      {/* Source URL */}
-                      {record.source_url && (
+                      {/* Non-YouTube Source URL */}
+                      {record.source_url && !getYouTubeVideoId(record.source_url) && (
                         <a
                           href={record.source_url}
                           target="_blank"
@@ -390,7 +392,15 @@ export default function VaultPage() {
                           className="mt-1.5 inline-flex items-center gap-1 text-[11px] text-zinc-500 hover:text-zinc-300 transition-colors truncate max-w-full"
                         >
                           <ExternalLink className="h-3 w-3 shrink-0" />
-                          <span className="truncate">{record.source_url.replace(/^https?:\/\//, '')}</span>
+                          <span className="truncate">
+                            {(() => {
+                              try {
+                                return new URL(record.source_url).hostname.replace(/^www\./, '')
+                              } catch {
+                                return record.source_url.replace(/^https?:\/\//, '')
+                              }
+                            })()}
+                          </span>
                         </a>
                       )}
                     </div>
