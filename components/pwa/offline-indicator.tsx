@@ -1,16 +1,35 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useSyncExternalStore } from 'react'
 import { WifiOff, RefreshCw, CheckCircle2, CloudUpload } from 'lucide-react'
 import { getPendingCount } from '@/lib/offline/outbox'
 import { syncOutbox } from '@/lib/offline/sync'
 import { useQueryClient } from '@tanstack/react-query'
 
+const emptySubscribe = () => () => {}
+
+function subscribeOnline(callback: () => void) {
+  window.addEventListener('online', callback)
+  window.addEventListener('offline', callback)
+  return () => {
+    window.removeEventListener('online', callback)
+    window.removeEventListener('offline', callback)
+  }
+}
+
 export function OfflineIndicator() {
   const queryClient = useQueryClient()
-  const [isOnline, setIsOnline] = useState(() =>
-    typeof navigator !== 'undefined' ? navigator.onLine : true
+  const hasMounted = useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false
   )
+  const isOnline = useSyncExternalStore(
+    subscribeOnline,
+    () => navigator.onLine,
+    () => true
+  )
+
   const [pendingCount, setPendingCount] = useState(0)
   const [isSyncing, setIsSyncing] = useState(false)
   const [showSyncedBanner, setShowSyncedBanner] = useState(false)
@@ -26,16 +45,6 @@ export function OfflineIndicator() {
     }
 
     updateCount()
-
-    const handleOnline = () => {
-      setIsOnline(true)
-      updateCount()
-    }
-
-    const handleOffline = () => {
-      setIsOnline(false)
-      updateCount()
-    }
 
     const handleOutboxChange = () => {
       updateCount()
@@ -53,14 +62,12 @@ export function OfflineIndicator() {
       }
     }
 
-    window.addEventListener('online', handleOnline)
-    window.addEventListener('offline', handleOffline)
+    window.addEventListener('online', updateCount)
     window.addEventListener('punk-outbox-changed', handleOutboxChange)
     window.addEventListener('punk-sync-state', handleSyncState)
 
     return () => {
-      window.removeEventListener('online', handleOnline)
-      window.removeEventListener('offline', handleOffline)
+      window.removeEventListener('online', updateCount)
       window.removeEventListener('punk-outbox-changed', handleOutboxChange)
       window.removeEventListener('punk-sync-state', handleSyncState)
     }
@@ -71,8 +78,8 @@ export function OfflineIndicator() {
     await syncOutbox(queryClient)
   }
 
-  // Hide completely when online and no pending sync or banner
-  if (isOnline && pendingCount === 0 && !isSyncing && !showSyncedBanner) {
+  // Hide completely before mount or when online and no pending sync or banner
+  if (!hasMounted || (isOnline && pendingCount === 0 && !isSyncing && !showSyncedBanner)) {
     return null
   }
 
