@@ -1,11 +1,12 @@
 'use client'
 
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { QueryClient, QueryClientProvider, IsRestoringProvider } from '@tanstack/react-query'
 import { useState, useEffect, type ReactNode } from 'react'
 import { restoreQueryClient, subscribeToCacheUpdates } from '@/lib/offline/persister'
 import { syncOutbox } from '@/lib/offline/sync'
 
 export function QueryProvider({ children }: { children: ReactNode }) {
+  const [isRestoring, setIsRestoring] = useState(true)
   const [queryClient] = useState(
     () =>
       new QueryClient({
@@ -31,9 +32,14 @@ export function QueryProvider({ children }: { children: ReactNode }) {
     let unsubscribeCache: (() => void) | undefined
 
     // 1. Restore cached data from IndexedDB on startup
-    restoreQueryClient(queryClient).then(() => {
-      unsubscribeCache = subscribeToCacheUpdates(queryClient)
-    })
+    restoreQueryClient(queryClient)
+      .then(() => {
+        setIsRestoring(false)
+        unsubscribeCache = subscribeToCacheUpdates(queryClient)
+      })
+      .catch(() => {
+        setIsRestoring(false)
+      })
 
     // 2. Initial outbox sync if online
     if (typeof navigator !== 'undefined' && navigator.onLine) {
@@ -63,5 +69,9 @@ export function QueryProvider({ children }: { children: ReactNode }) {
     }
   }, [queryClient])
 
-  return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+  return (
+    <QueryClientProvider client={queryClient}>
+      <IsRestoringProvider value={isRestoring}>{children}</IsRestoringProvider>
+    </QueryClientProvider>
+  )
 }

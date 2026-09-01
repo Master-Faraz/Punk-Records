@@ -1,11 +1,13 @@
 import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
 
+const AUTH_CACHE_KEY = 'punk_last_auth_user'
+
 /**
  * Retrieves the current authenticated user safely in both online and offline states.
  * - Reads from local session storage first (instant & zero network overhead).
- * - If online, verifies with getUser() when possible.
- * - If offline, falls back gracefully to session.user without throwing network errors.
+ * - Caches the verified user profile in localStorage for offline access.
+ * - If offline, falls back seamlessly to session.user or cached user without throwing network errors.
  */
 export async function getAuthenticatedUser(): Promise<User | null> {
   if (typeof window === 'undefined') return null
@@ -13,38 +15,55 @@ export async function getAuthenticatedUser(): Promise<User | null> {
   try {
     const supabase = createClient()
 
-    // 1. Check local session first (reads from storage, works completely offline)
+    // 1. Check local session first (reads from storage/cookies, works completely offline)
     const {
       data: { session },
     } = await supabase.auth.getSession()
 
-    if (!session?.user) {
-      // If offline and no session found in storage, unauthenticated
-      if (!navigator.onLine) return null
-
-      // If online, attempt getUser
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-      return user || null
+    if (session?.user) {
+      try {
+        localStorage.setItem(AUTH_CACHE_KEY, JSON.stringify(session.user))
+      } catch {}
+      return session.user
     }
 
-    // 2. If online and session exists, verify in background
+    // 2. If session was not immediately found in cookie and we are online, check getUser
     if (navigator.onLine) {
       try {
         const {
           data: { user },
           error,
         } = await supabase.auth.getUser()
-        if (!error && user) return user
+        if (!error && user) {
+          try {
+            localStorage.setItem(AUTH_CACHE_KEY, JSON.stringify(user))
+          } catch {}
+          return user
+        }
       } catch {
-        // If network request failed intermittently, still trust local session
+        // Network request failed intermittently, fall back to offline cache
       }
     }
 
-    return session.user
+    // 3. Fallback to cached user in localStorage (ensures offline mode always has user ID)
+    const cached = localStorage.getItem(AUTH_CACHE_KEY)
+    if (cached) {
+      try {
+        return JSON.parse(cached)
+      } catch {}
+    }
+
+    return null
   } catch (err) {
     console.warn('Failed to retrieve authenticated user:', err)
+    if (typeof localStorage !== 'undefined') {
+      const cached = localStorage.getItem(AUTH_CACHE_KEY)
+      if (cached) {
+        try {
+          return JSON.parse(cached)
+        } catch {}
+      }
+    }
     return null
   }
 }

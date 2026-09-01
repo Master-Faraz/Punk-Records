@@ -1,9 +1,9 @@
 // ==============================================================================
-// PUNK RECORDS — Production Service Worker (v2)
+// PUNK RECORDS — Production Service Worker (v3)
 // Offline-first caching with stale-while-revalidate and network-first navigation
 // ==============================================================================
 
-const CACHE_NAME = 'punk-records-v2'
+const CACHE_NAME = 'punk-records-v3'
 
 const PRECACHE_URLS = [
   '/',
@@ -103,9 +103,10 @@ self.addEventListener('fetch', (event) => {
   }
 
   // B. Next.js Static Assets, Fonts & Media (including Next Image & Supabase storage images)
+  const isNextImage = url.pathname.startsWith('/_next/image')
   const isStaticOrMedia =
     url.pathname.startsWith('/_next/static/') ||
-    url.pathname.startsWith('/_next/image') ||
+    isNextImage ||
     url.pathname.startsWith('/fonts/') ||
     url.pathname.startsWith('/icons/') ||
     url.pathname.startsWith('/images/') ||
@@ -120,8 +121,11 @@ self.addEventListener('fetch', (event) => {
     url.pathname.endsWith('.ico')
 
   if (isStaticOrMedia) {
+    // For Next.js images, query parameters distinguish different images (?url=...&w=...&q=...). NEVER ignore search!
+    const matchOptions = isNextImage ? {} : { ignoreSearch: true }
+
     event.respondWith(
-      caches.match(event.request, { ignoreSearch: true }).then((cachedResponse) => {
+      caches.match(event.request, matchOptions).then((cachedResponse) => {
         if (cachedResponse) return cachedResponse
 
         return fetch(event.request).then((networkResponse) => {

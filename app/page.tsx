@@ -40,9 +40,21 @@ export default function VaultPage() {
   // Fetch all user tags for tag filtering
   const { data: allTags = [] } = useQuery<Tag[]>({
     queryKey: ['tags'],
+    initialData: () => {
+      if (typeof window !== 'undefined') {
+        try {
+          const saved = localStorage.getItem('punk_cached_tags')
+          if (saved) return JSON.parse(saved)
+        } catch {}
+      }
+      return undefined
+    },
     queryFn: async () => {
       const user = await getAuthenticatedUser()
-      if (!user) return []
+      if (!user) {
+        if (!navigator.onLine) throw new Error('Offline: Session not available')
+        return []
+      }
 
       try {
         const supabase = createClient()
@@ -56,7 +68,11 @@ export default function VaultPage() {
           if (!navigator.onLine || error.message.includes('fetch')) throw error
           return []
         }
-        return data || []
+        const result = data || []
+        try {
+          localStorage.setItem('punk_cached_tags', JSON.stringify(result))
+        } catch {}
+        return result
       } catch (err) {
         if (!navigator.onLine) throw err
         return []
@@ -67,9 +83,21 @@ export default function VaultPage() {
   // Fetch all records with joined tags (unified single cache key for offline resilience)
   const { data: records = [], isLoading } = useQuery<RecordItem[]>({
     queryKey: ['records'],
+    initialData: () => {
+      if (typeof window !== 'undefined') {
+        try {
+          const saved = localStorage.getItem('punk_cached_records')
+          if (saved) return JSON.parse(saved)
+        } catch {}
+      }
+      return undefined
+    },
     queryFn: async () => {
       const user = await getAuthenticatedUser()
-      if (!user) return []
+      if (!user) {
+        if (!navigator.onLine) throw new Error('Offline: Session not available')
+        return []
+      }
 
       try {
         const supabase = createClient()
@@ -90,10 +118,16 @@ export default function VaultPage() {
           return []
         }
 
-        return (data || []).map((r: any) => ({
+        const mapped = (data || []).map((r: any) => ({
           ...r,
           tags: r.record_tags?.map((rt: any) => rt.tag).filter(Boolean) || [],
         }))
+
+        try {
+          localStorage.setItem('punk_cached_records', JSON.stringify(mapped))
+        } catch {}
+
+        return mapped
       } catch (err) {
         if (!navigator.onLine) throw err
         return []
