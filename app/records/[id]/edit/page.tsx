@@ -211,12 +211,12 @@ export default function EditRecordPage({ params }: { params: Promise<{ id: strin
     <AppShell>
       <div className="flex flex-col gap-6 max-w-4xl mx-auto">
         {/* Top bar */}
-        <div className="flex items-center justify-between">
+        <nav aria-label="Editor Actions" className="flex items-center justify-between gap-4">
           <Link
             href={`/records/${id}`}
-            className="flex items-center gap-1 text-xs font-semibold text-zinc-400 hover:text-white transition-colors"
+            className="inline-flex items-center text-xs sm:text-sm font-medium text-zinc-300 hover:text-white transition-colors group"
           >
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className="h-4 w-4 mr-1.5 transition-transform group-hover:-translate-x-0.5" />
             Cancel Editing
           </Link>
 
@@ -224,18 +224,20 @@ export default function EditRecordPage({ params }: { params: Promise<{ id: strin
             type="button"
             onClick={() => updateMutation.mutate()}
             disabled={updateMutation.isPending || !title.trim()}
-            className="flex items-center gap-2 rounded-xl bg-white px-5 py-2.5 text-xs font-bold text-zinc-950 transition-all hover:bg-zinc-200 disabled:opacity-50 shadow-sm"
+            className={`inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-semibold transition-all shadow-sm ${
+              title.trim()
+                ? 'bg-white text-zinc-950 hover:bg-zinc-200 active:scale-95 shadow-white/10 cursor-pointer'
+                : 'border border-zinc-800 bg-zinc-900/90 text-zinc-500 cursor-not-allowed'
+            }`}
           >
             {updateMutation.isPending ? (
-              <Loader2 className="h-4 w-4 animate-spin text-zinc-950" />
+              <Loader2 className="h-3.5 w-3.5 animate-spin text-zinc-400" />
             ) : (
-              <>
-                <Save className="h-4 w-4 stroke-[2.5]" />
-                Update Record
-              </>
+              <Save className="h-3.5 w-3.5 stroke-[2.5]" />
             )}
+            <span>Update Record</span>
           </button>
-        </div>
+        </nav>
 
         {/* Cover / Thumbnail Preview & Upload */}
         <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-4">

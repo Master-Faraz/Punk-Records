@@ -246,27 +246,31 @@ export default function SettingsPage() {
 
   return (
     <AppShell>
-      <div className="flex flex-col gap-8 max-w-4xl mx-auto">
+      <section className="flex flex-col gap-6 max-w-3xl mx-auto py-2">
         {/* Page Title */}
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-zinc-100 flex items-center gap-2.5">
-            <SettingsIcon className="h-6 w-6 text-zinc-300" />
-            Settings & Preferences
-          </h1>
-          <p className="text-xs text-zinc-400 mt-1">
-            Customize spaced repetition review intervals and manage your tag taxonomy
-          </p>
-        </div>
+        <header className="flex items-center gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-zinc-800/80 text-zinc-300 ring-1 ring-zinc-700/50 shadow-md">
+            <SettingsIcon className="h-5 w-5" />
+          </div>
+          <div>
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
+              Settings & Preferences
+            </h1>
+            <p className="text-xs text-zinc-400">
+              Customize spaced repetition review intervals and manage your tag taxonomy
+            </p>
+          </div>
+        </header>
 
         {/* 1. Review Interval Timings Section */}
-        <div className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-6 shadow-xl">
-          <div className="flex items-center justify-between border-b border-zinc-800 pb-4 mb-6">
-            <div className="flex items-center gap-2 text-zinc-100 font-semibold text-base">
-              <Clock className="h-5 w-5 text-zinc-400" />
+        <article className="rounded-2xl sm:rounded-3xl border border-zinc-800/80 bg-zinc-900/50 p-5 sm:p-7 shadow-xl backdrop-blur-sm">
+          <div className="flex items-center justify-between border-b border-zinc-800/80 pb-4 mb-5">
+            <div className="flex items-center gap-2 text-white font-semibold text-sm sm:text-base">
+              <Clock className="h-4 w-4 text-zinc-400" />
               <span>Spaced Repetition Review Timings</span>
             </div>
-            <span className="text-[11px] text-zinc-400 hidden sm:inline font-mono">
-              Adjust interval days for each recall stage
+            <span className="text-[11px] text-zinc-500 hidden sm:inline font-mono">
+              Interval days for recall stages
             </span>
           </div>
 
@@ -275,19 +279,19 @@ export default function SettingsPage() {
               e.preventDefault()
               saveSettingsMutation.mutate()
             }}
-            className="space-y-6"
+            className="space-y-5"
           >
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 sm:gap-4">
               {/* Stage 1 */}
-              <div className="rounded-xl border border-zinc-800 bg-zinc-950 p-4 flex flex-col justify-between">
+              <div className="rounded-xl border border-zinc-800/80 bg-zinc-950/70 p-3.5 sm:p-4 flex flex-col justify-between hover:border-zinc-700/80 transition-colors">
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
                     <span className="text-xs font-semibold text-zinc-200">Stage 1 Interval</span>
-                    <span className="rounded-full bg-zinc-800 border border-zinc-700/60 px-2 py-0.5 text-[10px] text-zinc-300 font-medium">
+                    <span className="rounded-full bg-zinc-800/80 border border-zinc-700/50 px-2 py-0.5 text-[10px] text-zinc-300 font-mono">
                       First Recall
                     </span>
                   </div>
-                  <p className="text-[11px] text-zinc-400">Days after initial capture before 1st review</p>
+                  <p className="text-[11px] text-zinc-400 leading-snug">Days after initial capture before 1st review</p>
                 </div>
                 <div className="mt-4 flex items-center gap-2">
                   <input
@@ -296,22 +300,22 @@ export default function SettingsPage() {
                     max="30"
                     value={stage1Days}
                     onChange={(e) => setStage1Days(Number(e.target.value))}
-                    className="w-20 rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-center text-sm font-bold text-zinc-100 focus:border-zinc-500 focus:outline-none font-mono"
+                    className="w-20 rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-1.5 text-center text-xs sm:text-sm font-bold text-white focus:border-zinc-500 focus:outline-none font-mono"
                   />
                   <span className="text-xs text-zinc-400 font-medium">day(s)</span>
                 </div>
               </div>
 
               {/* Stage 2 */}
-              <div className="rounded-xl border border-zinc-800 bg-zinc-950 p-4 flex flex-col justify-between">
+              <div className="rounded-xl border border-zinc-800/80 bg-zinc-950/70 p-3.5 sm:p-4 flex flex-col justify-between hover:border-zinc-700/80 transition-colors">
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
                     <span className="text-xs font-semibold text-zinc-200">Stage 2 Interval</span>
-                    <span className="rounded-full bg-zinc-800 border border-zinc-700/60 px-2 py-0.5 text-[10px] text-zinc-300 font-medium">
+                    <span className="rounded-full bg-zinc-800/80 border border-zinc-700/50 px-2 py-0.5 text-[10px] text-zinc-300 font-mono">
                       Consolidation
                     </span>
                   </div>
-                  <p className="text-[11px] text-zinc-400">Days added when remembered in Stage 1</p>
+                  <p className="text-[11px] text-zinc-400 leading-snug">Days added when remembered in Stage 1</p>
                 </div>
                 <div className="mt-4 flex items-center gap-2">
                   <input
@@ -320,22 +324,22 @@ export default function SettingsPage() {
                     max="90"
                     value={stage2Days}
                     onChange={(e) => setStage2Days(Number(e.target.value))}
-                    className="w-20 rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-center text-sm font-bold text-zinc-100 focus:border-zinc-500 focus:outline-none font-mono"
+                    className="w-20 rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-1.5 text-center text-xs sm:text-sm font-bold text-white focus:border-zinc-500 focus:outline-none font-mono"
                   />
                   <span className="text-xs text-zinc-400 font-medium">days</span>
                 </div>
               </div>
 
               {/* Stage 3 */}
-              <div className="rounded-xl border border-zinc-800 bg-zinc-950 p-4 flex flex-col justify-between">
+              <div className="rounded-xl border border-zinc-800/80 bg-zinc-950/70 p-3.5 sm:p-4 flex flex-col justify-between hover:border-zinc-700/80 transition-colors">
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
                     <span className="text-xs font-semibold text-zinc-200">Stage 3 Interval</span>
-                    <span className="rounded-full bg-zinc-800 border border-zinc-700/60 px-2 py-0.5 text-[10px] text-zinc-300 font-medium">
+                    <span className="rounded-full bg-zinc-800/80 border border-zinc-700/50 px-2 py-0.5 text-[10px] text-zinc-300 font-mono">
                       Mastery
                     </span>
                   </div>
-                  <p className="text-[11px] text-zinc-400">Days added for long-term retention reviews</p>
+                  <p className="text-[11px] text-zinc-400 leading-snug">Days added for long-term retention reviews</p>
                 </div>
                 <div className="mt-4 flex items-center gap-2">
                   <input
@@ -344,7 +348,7 @@ export default function SettingsPage() {
                     max="365"
                     value={stage3Days}
                     onChange={(e) => setStage3Days(Number(e.target.value))}
-                    className="w-20 rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-center text-sm font-bold text-zinc-100 focus:border-zinc-500 focus:outline-none font-mono"
+                    className="w-20 rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-1.5 text-center text-xs sm:text-sm font-bold text-white focus:border-zinc-500 focus:outline-none font-mono"
                   />
                   <span className="text-xs text-zinc-400 font-medium">days</span>
                 </div>
@@ -352,10 +356,10 @@ export default function SettingsPage() {
             </div>
 
             {/* Random Recall Cooldown */}
-            <div className="rounded-xl border border-zinc-800/80 bg-zinc-950/60 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="rounded-xl border border-zinc-800/80 bg-zinc-950/70 p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div>
                 <span className="text-xs font-semibold text-zinc-200">Random Recall Cooldown Filter</span>
-                <p className="text-[11px] text-zinc-400">
+                <p className="text-[11px] text-zinc-400 leading-snug">
                   Prevents records reviewed within this period from appearing in Random Recall (unless all records have been viewed)
                 </p>
               </div>
@@ -366,18 +370,18 @@ export default function SettingsPage() {
                   max="60"
                   value={randomCooldown}
                   onChange={(e) => setRandomCooldown(Number(e.target.value))}
-                  className="w-20 rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-center text-sm font-bold text-zinc-100 focus:border-zinc-500 focus:outline-none font-mono"
+                  className="w-20 rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-1.5 text-center text-xs sm:text-sm font-bold text-white focus:border-zinc-500 focus:outline-none font-mono"
                 />
                 <span className="text-xs text-zinc-400 font-medium">days</span>
               </div>
             </div>
 
             {/* Action Bar */}
-            <div className="flex items-center justify-between pt-2">
+            <div className="flex items-center justify-between pt-1">
               <div className="text-xs">
                 {settingsSavedMessage && (
-                  <span className="text-zinc-200 font-medium flex items-center gap-1.5 bg-zinc-800 border border-zinc-700 px-3 py-1.5 rounded-lg animate-in fade-in duration-150">
-                    <Check className="h-4 w-4 text-zinc-300 stroke-[2.5]" /> Timings saved successfully!
+                  <span className="text-zinc-200 font-medium flex items-center gap-1.5 bg-zinc-800/80 border border-zinc-700/70 px-3 py-1 rounded-full text-xs animate-in fade-in duration-150">
+                    <Check className="h-3.5 w-3.5 text-emerald-400 stroke-[2.5]" /> Timings saved successfully!
                   </span>
                 )}
               </div>
@@ -385,29 +389,29 @@ export default function SettingsPage() {
               <button
                 type="submit"
                 disabled={saveSettingsMutation.isPending}
-                className="flex items-center gap-2 rounded-xl bg-white px-5 py-2.5 text-xs font-bold text-zinc-950 transition-all hover:bg-zinc-200 active:scale-95 disabled:opacity-50 shadow-sm"
+                className="flex items-center gap-1.5 rounded-full bg-white px-4 py-1.5 text-xs font-semibold text-zinc-950 hover:bg-zinc-200 transition-all active:scale-95 disabled:opacity-50 shadow-sm shadow-white/10 cursor-pointer"
               >
                 {saveSettingsMutation.isPending ? (
-                  <Loader2 className="h-4 w-4 animate-spin text-zinc-950" />
+                  <Loader2 className="h-3.5 w-3.5 animate-spin text-zinc-950" />
                 ) : (
                   <>
-                    <Save className="h-4 w-4 stroke-[2.5]" />
-                    Save Review Timings
+                    <Save className="h-3.5 w-3.5 stroke-[2.5]" />
+                    <span>Save Review Timings</span>
                   </>
                 )}
               </button>
             </div>
           </form>
-        </div>
+        </article>
 
         {/* 2. Tag Management Section */}
-        <div className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-6 shadow-xl">
-          <div className="flex items-center justify-between border-b border-zinc-800 pb-4 mb-6">
-            <div className="flex items-center gap-2 text-zinc-100 font-semibold text-base">
-              <TagIcon className="h-5 w-5 text-zinc-400" />
+        <article className="rounded-2xl sm:rounded-3xl border border-zinc-800/80 bg-zinc-900/50 p-5 sm:p-7 shadow-xl backdrop-blur-sm">
+          <div className="flex items-center justify-between border-b border-zinc-800/80 pb-4 mb-5">
+            <div className="flex items-center gap-2 text-white font-semibold text-sm sm:text-base">
+              <TagIcon className="h-4 w-4 text-zinc-400" />
               <span>Tag Taxonomy & Filter Management</span>
             </div>
-            <span className="text-[11px] text-zinc-400 font-mono">
+            <span className="text-[11px] text-zinc-500 font-mono">
               {allTags.length} {allTags.length === 1 ? 'tag' : 'tags'} registered
             </span>
           </div>
@@ -419,30 +423,30 @@ export default function SettingsPage() {
               if (!newTagName.trim()) return
               createTagMutation.mutate(newTagName)
             }}
-            className="flex items-center gap-2 mb-6"
+            className="flex items-center gap-2 mb-5"
           >
             <div className="relative flex-1">
-              <Hash className="absolute left-3.5 top-3 h-4 w-4 text-zinc-500" />
+              <Hash className="absolute left-3 top-2.5 h-3.5 w-3.5 text-zinc-500" />
               <input
                 type="text"
                 value={newTagName}
                 onChange={(e) => setNewTagName(e.target.value)}
-                placeholder="Create new tag (e.g. system-design, machine-learning, book-notes)..."
-                className="w-full rounded-xl border border-zinc-800 bg-zinc-950 pl-10 pr-4 py-2.5 text-xs text-zinc-200 placeholder-zinc-500 focus:border-zinc-500 focus:outline-none"
+                placeholder="Create new tag (e.g. system-design, machine-learning)..."
+                className="w-full rounded-full border border-zinc-800 bg-zinc-950 pl-9 pr-4 py-1.5 text-xs text-zinc-200 placeholder-zinc-500 focus:border-zinc-500 focus:outline-none"
               />
             </div>
 
             <button
               type="submit"
               disabled={createTagMutation.isPending || !newTagName.trim()}
-              className="flex items-center gap-1.5 rounded-xl bg-white px-4 py-2.5 text-xs font-bold text-zinc-950 hover:bg-zinc-200 transition-colors disabled:opacity-50 shadow-sm"
+              className="flex items-center gap-1.5 rounded-full bg-white px-4 py-1.5 text-xs font-semibold text-zinc-950 hover:bg-zinc-200 transition-all active:scale-95 disabled:opacity-50 shadow-sm shadow-white/10 shrink-0 cursor-pointer"
             >
               {createTagMutation.isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin text-zinc-950" />
+                <Loader2 className="h-3.5 w-3.5 animate-spin text-zinc-950" />
               ) : (
                 <>
-                  <Plus className="h-4 w-4 stroke-[2.5]" />
-                  Add Tag
+                  <Plus className="h-3.5 w-3.5 stroke-[2.5]" />
+                  <span>Add Tag</span>
                 </>
               )}
             </button>
@@ -452,20 +456,20 @@ export default function SettingsPage() {
           {isLoadingTags ? (
             <div className="flex items-center justify-center py-10 text-zinc-500">
               <Loader2 className="h-5 w-5 animate-spin text-zinc-400" />
-              <span className="ml-2 text-xs">Loading tags...</span>
+              <span className="ml-2 text-xs font-mono text-zinc-400">Loading tags...</span>
             </div>
           ) : allTags.length === 0 ? (
-            <div className="py-8 text-center text-xs text-zinc-500 border border-dashed border-zinc-800/80 rounded-xl">
+            <div className="py-8 text-center text-xs text-zinc-500 border border-dashed border-zinc-800/80 rounded-2xl">
               No tags created yet. Add your first tag above to organize your knowledge vault!
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
               {allTags.map((tag) => {
                 const isEditing = editingTagId === tag.id
                 return (
                   <div
                     key={tag.id}
-                    className="flex items-center justify-between gap-2 rounded-xl border border-zinc-800 bg-zinc-950 p-3 text-xs"
+                    className="flex items-center justify-between gap-2 rounded-xl border border-zinc-800/80 bg-zinc-950/70 p-2.5 sm:p-3 text-xs hover:border-zinc-700/80 transition-colors"
                   >
                     {isEditing ? (
                       <div className="flex items-center gap-1 flex-1">
@@ -483,7 +487,7 @@ export default function SettingsPage() {
                               renameTagMutation.mutate({ id: tag.id, newName: editingTagName })
                             }
                           }}
-                          className="rounded p-1 text-zinc-200 hover:bg-zinc-800"
+                          className="rounded p-1 text-zinc-200 hover:bg-zinc-800 cursor-pointer"
                           title="Save Rename"
                         >
                           <Check className="h-3.5 w-3.5 stroke-[2.5]" />
@@ -491,7 +495,7 @@ export default function SettingsPage() {
                         <button
                           type="button"
                           onClick={() => setEditingTagId(null)}
-                          className="rounded p-1 text-zinc-500 hover:bg-zinc-800"
+                          className="rounded p-1 text-zinc-500 hover:bg-zinc-800 cursor-pointer"
                           title="Cancel"
                         >
                           <X className="h-3.5 w-3.5" />
@@ -501,7 +505,7 @@ export default function SettingsPage() {
                       <>
                         <div className="flex items-center gap-2 min-w-0">
                           <span className="font-medium text-zinc-200 truncate">#{tag.name}</span>
-                          <span className="rounded-full bg-zinc-900 px-2 py-0.5 text-[10px] text-zinc-500 font-mono">
+                          <span className="rounded-full bg-zinc-900 border border-zinc-800 px-2 py-0.5 text-[10px] text-zinc-500 font-mono">
                             {tag.count || 0}
                           </span>
                         </div>
@@ -513,7 +517,7 @@ export default function SettingsPage() {
                               setEditingTagId(tag.id)
                               setEditingTagName(tag.name)
                             }}
-                            className="rounded p-1 text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800 transition-colors"
+                            className="rounded p-1 text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800 transition-colors cursor-pointer"
                             title="Rename Tag"
                           >
                             <Edit2 className="h-3.5 w-3.5" />
@@ -525,7 +529,7 @@ export default function SettingsPage() {
                                 deleteTagMutation.mutate(tag.id)
                               }
                             }}
-                            className="rounded p-1 text-zinc-500 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                            className="rounded p-1 text-zinc-500 hover:text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer"
                             title="Delete Tag"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
@@ -538,24 +542,24 @@ export default function SettingsPage() {
               })}
             </div>
           )}
-        </div>
+        </article>
 
         {/* 3. Account & Session Section */}
-        <div className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-6 shadow-xl">
-          <div className="flex items-center justify-between border-b border-zinc-800 pb-4 mb-6">
-            <div className="flex items-center gap-2 text-zinc-100 font-semibold text-base">
-              <User className="h-5 w-5 text-zinc-400" />
+        <article className="rounded-2xl sm:rounded-3xl border border-zinc-800/80 bg-zinc-900/50 p-5 sm:p-7 shadow-xl backdrop-blur-sm">
+          <div className="flex items-center justify-between border-b border-zinc-800/80 pb-4 mb-5">
+            <div className="flex items-center gap-2 text-white font-semibold text-sm sm:text-base">
+              <User className="h-4 w-4 text-zinc-400" />
               <span>Account & Session</span>
             </div>
-            <span className="text-[11px] text-zinc-400">
-              Manage your active authentication session
+            <span className="text-[11px] text-zinc-500 hidden sm:inline font-mono">
+              Active authentication session
             </span>
           </div>
 
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 rounded-xl border border-zinc-800 bg-zinc-950 p-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 rounded-xl border border-zinc-800/80 bg-zinc-950/70 p-4">
             <div>
               <div className="text-xs font-semibold text-zinc-200">Connected Account</div>
-              <p className="text-xs text-zinc-400 mt-0.5">
+              <p className="text-xs text-zinc-400 mt-0.5 font-mono">
                 {currentUser?.email ?? 'Not signed in'}
               </p>
             </div>
@@ -564,23 +568,23 @@ export default function SettingsPage() {
               <button
                 type="button"
                 onClick={handleLogout}
-                className="flex items-center justify-center gap-2 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-2.5 text-xs font-semibold text-red-400 hover:bg-red-500/20 transition-colors active:scale-95"
+                className="flex items-center justify-center gap-1.5 rounded-full border border-red-500/30 bg-red-500/10 px-4 py-1.5 text-xs font-semibold text-red-400 hover:bg-red-500/20 active:scale-95 transition-all self-start sm:self-auto cursor-pointer"
               >
-                <LogOut className="h-4 w-4" />
-                Sign Out
+                <LogOut className="h-3.5 w-3.5" />
+                <span>Sign Out</span>
               </button>
             ) : (
               <Link
                 href="/auth/login"
-                className="flex items-center justify-center gap-2 rounded-xl bg-white px-4 py-2.5 text-xs font-bold text-zinc-950 hover:bg-zinc-200 transition-colors active:scale-95 shadow-sm"
+                className="flex items-center justify-center gap-1.5 rounded-full bg-white px-4 py-1.5 text-xs font-semibold text-zinc-950 hover:bg-zinc-200 active:scale-95 transition-all shadow-sm self-start sm:self-auto"
               >
-                <LogIn className="h-4 w-4" />
-                Sign In
+                <LogIn className="h-3.5 w-3.5" />
+                <span>Sign In</span>
               </Link>
             )}
           </div>
-        </div>
-      </div>
+        </article>
+      </section>
     </AppShell>
   )
 }
