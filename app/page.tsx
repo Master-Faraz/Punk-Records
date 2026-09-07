@@ -234,7 +234,7 @@ export default function VaultPage() {
             <p className="text-xs text-zinc-400">Search by title and tag-filter your notes, insights, and videos</p>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="hidden sm:flex items-center gap-2">
             <Link
               href="/editor/new"
               className="flex items-center gap-1.5 rounded-xl bg-white px-4 py-2 text-xs font-bold text-zinc-950 transition-all hover:bg-zinc-200 active:scale-95 shadow-sm"

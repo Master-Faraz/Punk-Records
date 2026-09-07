@@ -343,17 +343,26 @@ button, input, textarea, select {
 pre:has(code) {
   background-color: #282a36 !important;
   border: 1px solid #44475a !important;
-  border-radius: 0.5rem !important;
-  padding: 0.7rem 0.95rem !important;
+  border-radius: 0.45rem !important;
+  padding: 0.5rem 0.65rem !important;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace !important;
-  font-size: 0.75rem !important;
-  line-height: 1.5 !important;
+  font-size: 0.625rem !important;
+  line-height: 1.4 !important;
   overflow-x: auto !important;
-  margin-top: 0.6em !important;
-  margin-bottom: 0.6em !important;
+  margin-top: 0.5em !important;
+  margin-bottom: 0.5em !important;
   color: #f8f8f2 !important;
   letter-spacing: 0.01em !important;
   box-shadow: 0 4px 14px -2px rgba(0, 0, 0, 0.4) !important;
+}
+
+@media (min-width: 640px) {
+  .tiptap-content pre,
+  pre:has(code) {
+    font-size: 0.75rem !important;
+    padding: 0.7rem 0.95rem !important;
+    line-height: 1.5 !important;
+  }
 }
 
 .tiptap-content pre code,
@@ -369,12 +378,19 @@ pre:has(code) code {
 .tiptap-content :not(pre) > code {
   background: #1e1f29 !important;
   border: 1px solid #44475a !important;
-  border-radius: 0.25rem !important;
-  padding: 0.1rem 0.3rem !important;
+  border-radius: 0.2rem !important;
+  padding: 0.06rem 0.2rem !important;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace !important;
-  font-size: 0.75rem !important;
+  font-size: 0.625rem !important;
   color: #ff79c6 !important;
   letter-spacing: 0.01em !important;
+}
+
+@media (min-width: 640px) {
+  .tiptap-content :not(pre) > code {
+    font-size: 0.75rem !important;
+    padding: 0.1rem 0.3rem !important;
+  }
 }
 
 /* Dracula Syntax Tokens */

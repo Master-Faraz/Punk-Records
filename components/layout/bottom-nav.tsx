@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { BookOpen, Brain, Dices, RefreshCw, Check, Settings } from 'lucide-react'
+import { BookOpen, Brain, Dices, Settings, Plus } from 'lucide-react'
 
 interface BottomNavProps {
   dueCount?: number
@@ -13,9 +13,6 @@ interface BottomNavProps {
 
 export function BottomNav({
   dueCount = 0,
-  onQuickSync,
-  isSyncing = false,
-  justSynced = false,
 }: BottomNavProps) {
   const pathname = usePathname()
 
@@ -47,19 +44,15 @@ export function BottomNav({
           )}
         </Link>
 
-        {/* Center Quick Sync FAB */}
-        <button
-          onClick={onQuickSync}
-          disabled={isSyncing}
-          className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-zinc-950 shadow-lg active:scale-95 transition-all hover:bg-zinc-200 cursor-pointer disabled:opacity-80"
-          aria-label="Quick Sync across devices"
+        {/* Center New Record FAB */}
+        <Link
+          href="/editor/new"
+          className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-zinc-950 shadow-lg shadow-white/10 active:scale-95 transition-all hover:bg-zinc-200 cursor-pointer"
+          aria-label="New Record"
+          title="New Record"
         >
-          {justSynced ? (
-            <Check className="h-5 w-5 stroke-[2.5] text-emerald-600" />
-          ) : (
-            <RefreshCw className={`h-5 w-5 stroke-[2.5] ${isSyncing ? 'animate-spin text-zinc-700' : ''}`} />
-          )}
-        </button>
+          <Plus className="h-5 w-5 stroke-[2.5]" />
+        </Link>
 
         <Link
           href="/random"
