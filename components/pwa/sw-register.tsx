@@ -7,6 +7,29 @@ export function ServiceWorkerRegister() {
   useEffect(() => {
     if (typeof window === 'undefined' || !('serviceWorker' in navigator)) return
 
+    // In development mode (localhost), unregister any active service worker and purge caches
+    // so Next.js HMR, styling, and data changes update immediately without stale cache interception
+    const isLocalhost =
+      window.location.hostname === 'localhost' ||
+      window.location.hostname === '127.0.0.1' ||
+      window.location.hostname.startsWith('192.168.')
+
+    if (process.env.NODE_ENV === 'development' || isLocalhost) {
+      navigator.serviceWorker.getRegistrations().then((registrations) => {
+        for (const registration of registrations) {
+          registration.unregister()
+        }
+      })
+      if ('caches' in window) {
+        caches.keys().then((keys) => {
+          for (const key of keys) {
+            caches.delete(key)
+          }
+        })
+      }
+      return
+    }
+
     navigator.serviceWorker
       .register('/sw.js')
       .then((registration) => {

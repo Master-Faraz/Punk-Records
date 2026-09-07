@@ -323,9 +323,9 @@ export default function RecordDetailPage({ params }: { params: Promise<{ id: str
         </nav>
 
         {/* Main Editorial Container */}
-        <article className="rounded-3xl border border-zinc-800/80 bg-zinc-900/50 shadow-2xl p-6 sm:p-10 lg:p-12 backdrop-blur-sm">
+        <article className="rounded-2xl border border-zinc-800/80 bg-zinc-900/50 shadow-xl p-6 sm:p-8 backdrop-blur-sm">
           {/* Main H1 Title */}
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-zinc-50 leading-tight mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white mb-6">
             {record.title}
           </h1>
 

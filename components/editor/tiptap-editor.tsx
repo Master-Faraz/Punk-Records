@@ -2,6 +2,8 @@
 
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
+import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight'
+import { lowlight } from '@/lib/lowlight'
 import LinkExtension from '@tiptap/extension-link'
 import Youtube from '@tiptap/extension-youtube'
 import Placeholder from '@tiptap/extension-placeholder'
@@ -59,11 +61,15 @@ export function TiptapEditor({
     immediatelyRender: false,
     extensions: [
       StarterKit.configure({
+        codeBlock: false,
         link: false,
         underline: false,
         heading: {
           levels: [1, 2, 3],
         },
+      }),
+      CodeBlockLowlight.configure({
+        lowlight,
       }),
       Underline,
       Highlight.configure({ multicolor: true }),
@@ -310,6 +316,35 @@ export function TiptapEditor({
         >
           <CodeXml className="h-4 w-4" />
         </button>
+
+        {editor.isActive('codeBlock') && (
+          <select
+            value={editor.getAttributes('codeBlock').language || 'auto'}
+            onChange={(e) => {
+              const val = e.target.value
+              editor.chain().focus().updateAttributes('codeBlock', { language: val === 'auto' ? null : val }).run()
+            }}
+            className="rounded-md border border-zinc-700 bg-zinc-800 px-2 py-1 text-xs text-zinc-200 focus:outline-none focus:ring-1 focus:ring-zinc-500"
+            title="Code Language"
+          >
+            <option value="auto">Auto Detect</option>
+            <option value="typescript">TypeScript</option>
+            <option value="javascript">JavaScript</option>
+            <option value="python">Python</option>
+            <option value="html">HTML</option>
+            <option value="css">CSS</option>
+            <option value="json">JSON</option>
+            <option value="sql">SQL</option>
+            <option value="bash">Bash</option>
+            <option value="markdown">Markdown</option>
+            <option value="rust">Rust</option>
+            <option value="go">Go</option>
+            <option value="cpp">C++</option>
+            <option value="csharp">C#</option>
+            <option value="java">Java</option>
+            <option value="yaml">YAML</option>
+          </select>
+        )}
 
         <button
           type="button"

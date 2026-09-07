@@ -57,6 +57,15 @@ self.addEventListener('activate', (event) => {
 
 // 3. FETCH — Differentiated routing strategies
 self.addEventListener('fetch', (event) => {
+  // Never intercept or cache on localhost in development mode
+  if (
+    self.location.hostname === 'localhost' ||
+    self.location.hostname === '127.0.0.1' ||
+    self.location.hostname.startsWith('192.168.')
+  ) {
+    return
+  }
+
   // Only intercept GET requests
   if (event.request.method !== 'GET') return
 
