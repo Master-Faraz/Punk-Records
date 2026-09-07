@@ -340,7 +340,7 @@ export default function QuickNotesPage() {
               >
                 {/* Title */}
                 <div>
-                  <label className="block text-[11px] font-semibold text-zinc-300 mb-1.5">
+                  <label className="block text-[11px] md:text-xs font-semibold text-zinc-300 mb-1.5">
                     Title *
                   </label>
                   <input
@@ -350,13 +350,13 @@ export default function QuickNotesPage() {
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     placeholder="e.g. Quick architectural thought on cache invalidation..."
-                    className="w-full rounded-xl border border-zinc-800 bg-zinc-900 px-3.5 py-2 text-xs text-zinc-100 placeholder-zinc-500 focus:border-zinc-500 focus:outline-none"
+                    className="w-full rounded-xl border border-zinc-800 bg-zinc-900 px-3.5 py-2 text-xs md:text-sm text-zinc-100 placeholder-zinc-500 focus:border-zinc-500 focus:outline-none transition-colors"
                   />
                 </div>
 
                 {/* Description */}
                 <div>
-                  <label className="block text-[11px] font-semibold text-zinc-300 mb-1.5">
+                  <label className="block text-[11px] md:text-xs font-semibold text-zinc-300 mb-1.5">
                     Content / Note Body *
                   </label>
                   <textarea
@@ -365,7 +365,7 @@ export default function QuickNotesPage() {
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     placeholder="Type anything that comes to mind... snippets, reminders, unpolished thoughts."
-                    className="w-full rounded-xl border border-zinc-800 bg-zinc-900 px-3.5 py-2.5 text-xs text-zinc-100 placeholder-zinc-500 focus:border-zinc-500 focus:outline-none resize-none leading-relaxed font-sans"
+                    className="w-full rounded-xl border border-zinc-800 bg-zinc-900 px-3.5 py-2.5 text-xs md:text-sm text-zinc-100 placeholder-zinc-500 focus:border-zinc-500 focus:outline-none resize-none leading-relaxed font-sans transition-colors"
                   />
                 </div>
 
@@ -375,7 +375,7 @@ export default function QuickNotesPage() {
                     type="checkbox"
                     checked={isPinned}
                     onChange={(e) => setIsPinned(e.target.checked)}
-                    className="rounded border-zinc-800 bg-zinc-900 accent-white h-4 w-4"
+                    className="rounded border-zinc-800 bg-zinc-900 accent-white h-4 w-4 cursor-pointer"
                   />
                   <Pin className="h-3.5 w-3.5 text-zinc-400" />
                   <span>Pin this note to the top</span>
@@ -386,14 +386,14 @@ export default function QuickNotesPage() {
                   <button
                     type="button"
                     onClick={() => setIsModalOpen(false)}
-                    className="rounded-full border border-zinc-800 bg-zinc-900 px-4 py-1.5 text-xs font-medium text-zinc-400 hover:text-white hover:border-zinc-700 transition-colors"
+                    className="rounded-full border border-zinc-800 bg-zinc-900 px-4 py-1.5 text-xs font-medium text-zinc-400 hover:text-white hover:border-zinc-700 transition-colors cursor-pointer"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={saveNoteMutation.isPending || !title.trim() || !description.trim()}
-                    className="flex items-center gap-1.5 rounded-full bg-white px-4 py-1.5 text-xs font-semibold text-zinc-950 hover:bg-zinc-200 active:scale-95 transition-all shadow-sm disabled:opacity-50"
+                    className="flex items-center gap-1.5 rounded-full bg-white px-4 py-1.5 text-xs font-semibold text-zinc-950 hover:bg-zinc-200 active:scale-95 transition-all shadow-sm disabled:opacity-50 cursor-pointer"
                   >
                     {saveNoteMutation.isPending ? (
                       <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -522,7 +522,7 @@ export default function QuickNotesPage() {
                     </h2>
 
                     {/* Note Description / Body */}
-                    <p className="text-xs text-zinc-300 leading-relaxed break-words whitespace-pre-wrap font-sans">
+                    <p className="text-xs md:text-sm text-zinc-300 leading-relaxed break-words whitespace-pre-wrap font-sans">
                       {note.description}
                     </p>
                   </div>

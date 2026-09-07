@@ -331,7 +331,7 @@ export default function GoalsPage() {
               >
                 {/* Title */}
                 <div>
-                  <label className="block text-[11px] font-semibold text-zinc-300 mb-1.5">
+                  <label className="block text-[11px] md:text-xs font-semibold text-zinc-300 mb-1.5">
                     Goal Title *
                   </label>
                   <input
@@ -341,13 +341,13 @@ export default function GoalsPage() {
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     placeholder="e.g. Master React Server Components & Suspense"
-                    className="w-full rounded-xl border border-zinc-800 bg-zinc-900 px-3.5 py-2 text-xs text-zinc-100 placeholder-zinc-500 focus:border-zinc-500 focus:outline-none"
+                    className="w-full rounded-xl border border-zinc-800 bg-zinc-900 px-3.5 py-2 text-xs md:text-sm text-zinc-100 placeholder-zinc-500 focus:border-zinc-500 focus:outline-none transition-colors"
                   />
                 </div>
 
                 {/* Description */}
                 <div>
-                  <label className="block text-[11px] font-semibold text-zinc-300 mb-1.5">
+                  <label className="block text-[11px] md:text-xs font-semibold text-zinc-300 mb-1.5">
                     Description & Plan
                   </label>
                   <textarea
@@ -355,26 +355,26 @@ export default function GoalsPage() {
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     placeholder="Key milestones, books to finish, or specific modules to build..."
-                    className="w-full rounded-xl border border-zinc-800 bg-zinc-900 px-3.5 py-2 text-xs text-zinc-100 placeholder-zinc-500 focus:border-zinc-500 focus:outline-none resize-none"
+                    className="w-full rounded-xl border border-zinc-800 bg-zinc-900 px-3.5 py-2 text-xs md:text-sm text-zinc-100 placeholder-zinc-500 focus:border-zinc-500 focus:outline-none resize-none transition-colors"
                   />
                 </div>
 
                 {/* Deadline Date */}
                 <div>
-                  <label className="block text-[11px] font-semibold text-zinc-300 mb-1.5">
+                  <label className="block text-[11px] md:text-xs font-semibold text-zinc-300 mb-1.5">
                     Target Deadline
                   </label>
                   <input
                     type="date"
                     value={deadlineDate}
                     onChange={(e) => setDeadlineDate(e.target.value)}
-                    className="w-full rounded-xl border border-zinc-800 bg-zinc-900 px-3.5 py-2 text-xs text-zinc-100 focus:border-zinc-500 focus:outline-none font-mono"
+                    className="w-full rounded-xl border border-zinc-800 bg-zinc-900 px-3.5 py-2 text-xs md:text-sm text-zinc-100 focus:border-zinc-500 focus:outline-none font-mono transition-colors"
                   />
                 </div>
 
                 {/* Reference Links */}
                 <div>
-                  <label className="block text-[11px] font-semibold text-zinc-300 mb-1.5">
+                  <label className="block text-[11px] md:text-xs font-semibold text-zinc-300 mb-1.5">
                     References & Links
                   </label>
                   <div className="flex gap-2 mb-2">
@@ -383,19 +383,19 @@ export default function GoalsPage() {
                       value={newLinkTitle}
                       onChange={(e) => setNewLinkTitle(e.target.value)}
                       placeholder="Label (optional)"
-                      className="w-1/3 rounded-xl border border-zinc-800 bg-zinc-900 px-3 py-1.5 text-xs text-zinc-100 placeholder-zinc-500 focus:border-zinc-500 focus:outline-none"
+                      className="w-1/3 rounded-xl border border-zinc-800 bg-zinc-900 px-3 py-1.5 text-xs md:text-sm text-zinc-100 placeholder-zinc-500 focus:border-zinc-500 focus:outline-none transition-colors"
                     />
                     <input
                       type="text"
                       value={newLinkUrl}
                       onChange={(e) => setNewLinkUrl(e.target.value)}
                       placeholder="https://..."
-                      className="flex-1 rounded-xl border border-zinc-800 bg-zinc-900 px-3 py-1.5 text-xs text-zinc-100 placeholder-zinc-500 focus:border-zinc-500 focus:outline-none"
+                      className="flex-1 rounded-xl border border-zinc-800 bg-zinc-900 px-3 py-1.5 text-xs md:text-sm text-zinc-100 placeholder-zinc-500 focus:border-zinc-500 focus:outline-none transition-colors"
                     />
                     <button
                       type="button"
                       onClick={handleAddLink}
-                      className="rounded-xl border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs font-semibold text-zinc-200 hover:bg-zinc-700 transition-colors"
+                      className="rounded-xl border border-zinc-700 bg-zinc-800 px-3.5 py-1.5 text-xs font-semibold text-zinc-200 hover:bg-zinc-700 transition-colors cursor-pointer"
                     >
                       Add
                     </button>
@@ -413,7 +413,7 @@ export default function GoalsPage() {
                           <button
                             type="button"
                             onClick={() => handleRemoveLink(i)}
-                            className="rounded-full p-0.5 text-zinc-500 hover:text-red-400"
+                            className="rounded-full p-0.5 text-zinc-500 hover:text-red-400 cursor-pointer"
                           >
                             <X className="h-3 w-3" />
                           </button>
@@ -428,14 +428,14 @@ export default function GoalsPage() {
                   <button
                     type="button"
                     onClick={() => setIsModalOpen(false)}
-                    className="rounded-full border border-zinc-800 bg-zinc-900 px-4 py-1.5 text-xs font-medium text-zinc-400 hover:text-white hover:border-zinc-700 transition-colors"
+                    className="rounded-full border border-zinc-800 bg-zinc-900 px-4 py-1.5 text-xs font-medium text-zinc-400 hover:text-white hover:border-zinc-700 transition-colors cursor-pointer"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={saveGoalMutation.isPending || !title.trim()}
-                    className="flex items-center gap-1.5 rounded-full bg-white px-4 py-1.5 text-xs font-semibold text-zinc-950 hover:bg-zinc-200 active:scale-95 transition-all shadow-sm disabled:opacity-50"
+                    className="flex items-center gap-1.5 rounded-full bg-white px-4 py-1.5 text-xs font-semibold text-zinc-950 hover:bg-zinc-200 active:scale-95 transition-all shadow-sm disabled:opacity-50 cursor-pointer"
                   >
                     {saveGoalMutation.isPending ? (
                       <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -502,11 +502,11 @@ export default function GoalsPage() {
                             </button>
 
                             <div className="min-w-0 flex-1">
-                              <h3 className="text-sm font-semibold text-white leading-snug break-words">
+                              <h3 className="text-sm md:text-base font-semibold text-white leading-snug break-words">
                                 {goal.title}
                               </h3>
                               {goal.description && (
-                                <p className="mt-1 text-xs text-zinc-400 leading-relaxed break-words whitespace-pre-line">
+                                <p className="mt-1 text-xs md:text-sm text-zinc-400 leading-relaxed break-words whitespace-pre-line">
                                   {goal.description}
                                 </p>
                               )}
@@ -518,7 +518,7 @@ export default function GoalsPage() {
                             <button
                               type="button"
                               onClick={() => handleEdit(goal)}
-                              className="rounded-lg p-1.5 text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800 transition-colors"
+                              className="rounded-lg p-1.5 text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800 transition-colors cursor-pointer"
                               title="Edit goal"
                             >
                               <Edit2 className="h-3.5 w-3.5" />
@@ -530,7 +530,7 @@ export default function GoalsPage() {
                                   deleteGoalMutation.mutate(goal.id)
                                 }
                               }}
-                              className="rounded-lg p-1.5 text-zinc-500 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                              className="rounded-lg p-1.5 text-zinc-500 hover:text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer"
                               title="Delete goal"
                             >
                               <Trash2 className="h-3.5 w-3.5" />
@@ -606,7 +606,7 @@ export default function GoalsPage() {
                           </button>
 
                           <div className="min-w-0 flex-1">
-                            <span className="text-xs font-medium text-zinc-400 line-through">
+                            <span className="text-xs md:text-sm font-medium text-zinc-400 line-through">
                               {goal.title}
                             </span>
                             {goal.completed_at && (
@@ -624,7 +624,7 @@ export default function GoalsPage() {
                               deleteGoalMutation.mutate(goal.id)
                             }
                           }}
-                          className="rounded-lg p-1.5 text-zinc-600 hover:text-red-400 transition-colors"
+                          className="rounded-lg p-1.5 text-zinc-600 hover:text-red-400 transition-colors cursor-pointer"
                           title="Delete"
                         >
                           <Trash2 className="h-3.5 w-3.5" />

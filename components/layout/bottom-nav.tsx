@@ -18,22 +18,22 @@ export function BottomNav({
   const pathname = usePathname()
   const [isMoreOpen, setIsMoreOpen] = useState(false)
 
-  const isMoreActive = pathname === '/review' || pathname === '/random' || pathname === '/settings'
+  const isMoreActive = pathname === '/notes' || pathname === '/goals' || pathname === '/settings'
 
   const drawerItems = [
     {
-      label: 'Review Mode',
-      href: '/review',
-      icon: Brain,
-      badge: dueCount > 0 ? `${dueCount} due` : null,
-      desc: 'Spaced repetition recall queue',
+      label: 'Quick Notes',
+      href: '/notes',
+      icon: StickyNote,
+      badge: null,
+      desc: 'Fleeting thoughts & instant scratchpad',
     },
     {
-      label: 'Random Recall',
-      href: '/random',
-      icon: Dices,
+      label: 'Future Goals',
+      href: '/goals',
+      icon: ListTodo,
       badge: null,
-      desc: '5-minute spontaneous knowledge pull',
+      desc: 'Action checklists, deadlines & references',
     },
     {
       label: 'Settings & Preferences',
@@ -125,18 +125,23 @@ export function BottomNav({
             <span>Vault</span>
           </Link>
 
-          {/* 2. Quick Notes */}
+          {/* 2. Recall (Review Mode) */}
           <Link
-            href="/notes"
-            className={`flex flex-col items-center justify-center gap-1 w-14 py-1 text-[10px] font-medium transition-colors ${
-              pathname === '/notes' ? 'text-red-400 font-bold' : 'text-zinc-500 hover:text-zinc-200'
+            href="/review"
+            className={`relative flex flex-col items-center justify-center gap-1 w-14 py-1 text-[10px] font-medium transition-colors ${
+              pathname === '/review' ? 'text-red-400 font-bold' : 'text-zinc-500 hover:text-zinc-200'
             }`}
           >
-            <StickyNote className="h-5 w-5" />
-            <span>Notes</span>
+            <Brain className="h-5 w-5" />
+            <span>Recall</span>
+            {dueCount > 0 && (
+              <span className="absolute top-0 right-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white font-mono shadow-sm">
+                {dueCount}
+              </span>
+            )}
           </Link>
 
-          {/* 3. Center FAB */}
+          {/* 3. Center FAB (New Record) */}
           <Link
             href="/editor/new"
             className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-zinc-950 shadow-lg shadow-white/10 active:scale-95 transition-all hover:bg-zinc-200 cursor-pointer"
@@ -146,18 +151,18 @@ export function BottomNav({
             <Plus className="h-5 w-5 stroke-[2.5]" />
           </Link>
 
-          {/* 4. Goals */}
+          {/* 4. Random Recall */}
           <Link
-            href="/goals"
+            href="/random"
             className={`flex flex-col items-center justify-center gap-1 w-14 py-1 text-[10px] font-medium transition-colors ${
-              pathname === '/goals' ? 'text-red-400 font-bold' : 'text-zinc-500 hover:text-zinc-200'
+              pathname === '/random' ? 'text-red-400 font-bold' : 'text-zinc-500 hover:text-zinc-200'
             }`}
           >
-            <ListTodo className="h-5 w-5" />
-            <span>Goals</span>
+            <Dices className="h-5 w-5" />
+            <span>Random</span>
           </Link>
 
-          {/* 5. More (Drawer Trigger) */}
+          {/* 5. More (Drawer Trigger for Secondary Sections: Notes, Goals, Settings) */}
           <button
             type="button"
             onClick={() => setIsMoreOpen((prev) => !prev)}
@@ -167,9 +172,6 @@ export function BottomNav({
           >
             <Menu className="h-5 w-5" />
             <span>More</span>
-            {dueCount > 0 && (
-              <span className="absolute top-0.5 right-2 flex h-2 w-2 rounded-full bg-red-500 ring-2 ring-zinc-950" />
-            )}
           </button>
         </div>
       </nav>
