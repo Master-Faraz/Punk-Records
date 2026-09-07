@@ -53,21 +53,6 @@ export default function RootLayout({
       data-scroll-behavior="smooth"
       className={`${neueHaas.variable} ${ppEditorial.variable} ${martianMono.variable} ${familjenGrotesk.variable} h-full antialiased dark scroll-smooth`}
     >
-      <head>
-        <script
-          id="suppress-devtools-vitals-bug"
-          dangerouslySetInnerHTML={{
-            __html: `
-              window.addEventListener('error', function(e) {
-                if (e && e.message && (e.message.indexOf("reading 'startTime'") !== -1 || e.message.indexOf("reportAllChanges") !== -1)) {
-                  e.preventDefault();
-                  e.stopImmediatePropagation();
-                }
-              }, true);
-            `,
-          }}
-        />
-      </head>
       <body className="min-h-full flex flex-col bg-[#08090a] text-[#f2f2f0] font-sans selection:bg-zinc-800 selection:text-white">
         <QueryProvider>{children}</QueryProvider>
         <ServiceWorkerRegister />

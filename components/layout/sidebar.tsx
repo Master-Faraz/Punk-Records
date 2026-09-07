@@ -3,7 +3,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { BookOpen, Brain, Dices, RefreshCw, Check, LogOut, Settings as SettingsIcon } from 'lucide-react'
+import { BookOpen, Brain, Dices, RefreshCw, Check, LogOut, Settings as SettingsIcon, ListTodo, StickyNote } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
 interface SidebarProps {
@@ -43,6 +43,18 @@ export function Sidebar({
       href: '/review',
       icon: Brain,
       badge: dueCount > 0 ? dueCount : null,
+    },
+    {
+      label: 'Quick Notes',
+      href: '/notes',
+      icon: StickyNote,
+      badge: null,
+    },
+    {
+      label: 'Goals',
+      href: '/goals',
+      icon: ListTodo,
+      badge: null,
     },
     {
       label: 'Random',

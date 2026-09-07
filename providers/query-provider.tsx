@@ -59,13 +59,28 @@ export function QueryProvider({ children }: { children: ReactNode }) {
       }
     }
 
+    // 5. Suppress Chrome DevTools Live Metrics VM crash on tab visibility switch
+    const handleDevToolsError = (e: ErrorEvent) => {
+      if (
+        e &&
+        e.message &&
+        (e.message.indexOf("reading 'startTime'") !== -1 ||
+          e.message.indexOf('reportAllChanges') !== -1)
+      ) {
+        e.preventDefault()
+        e.stopImmediatePropagation()
+      }
+    }
+
     window.addEventListener('online', handleOnline)
     document.addEventListener('visibilitychange', handleVisibilityChange)
+    window.addEventListener('error', handleDevToolsError, true)
 
     return () => {
       if (unsubscribeCache) unsubscribeCache()
       window.removeEventListener('online', handleOnline)
       document.removeEventListener('visibilitychange', handleVisibilityChange)
+      window.removeEventListener('error', handleDevToolsError, true)
     }
   }, [queryClient])
 

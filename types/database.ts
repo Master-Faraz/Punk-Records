@@ -62,3 +62,32 @@ export const DEFAULT_USER_SETTINGS: UserSettings = {
 export type ReviewInterval = 1 | 7 | 30
 
 export const REVIEW_STAGES = [1, 7, 30] as const
+
+export interface GoalLink {
+  url: string
+  title?: string
+}
+
+export interface Goal {
+  id: string
+  user_id: string
+  title: string
+  description?: string | null
+  links: GoalLink[]
+  deadline_date?: string | null
+  is_completed: boolean
+  completed_at?: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface QuickNote {
+  id: string
+  user_id: string
+  title: string
+  description: string
+  is_pinned: boolean
+  created_at: string
+  updated_at: string
+}
+
